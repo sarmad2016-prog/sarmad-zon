@@ -1,0 +1,22 @@
+{
+  "id": "./index.html",
+  "name": "ساحة الألعاب",
+  "short_name": "الألعاب",
+  "description": "ساحة ألعاب الحية والدرج وإكس أو والشطرنج",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#eff0e3",
+  "theme_color": "#6e7d48",
+  "icons": [
+    {
+      "src": "../icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
