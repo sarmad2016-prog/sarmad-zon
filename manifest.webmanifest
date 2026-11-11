@@ -1,0 +1,22 @@
+{
+  "id": "./",
+  "name": "Sarmad Zone",
+  "short_name": "Sarmad Zone",
+  "description": "مكتبتك الرقمية والألعاب ومنشئ السيرة الذاتية",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./library/",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f7f5",
+  "theme_color": "#0d3f29",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
