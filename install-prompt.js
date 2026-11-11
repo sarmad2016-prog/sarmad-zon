@@ -48,9 +48,9 @@
     try { localStorage.setItem(installedKey, '1'); } catch (_) {}
     box.hidden = true; installEvent = null;
   });
-  document.getElementById('szInstallNo').addEventListener('click', () => { choiceMade = true; box.hidden = true; });
-  document.getElementById('szInstallYes').addEventListener('click', async () => {
-    const help = document.getElementById('szInstallHelp');
+  box.querySelector('#szInstallNo').addEventListener('click', () => { choiceMade = true; box.hidden = true; });
+  box.querySelector('#szInstallYes').addEventListener('click', async () => {
+    const help = box.querySelector('#szInstallHelp');
     if (installEvent) {
       const event = installEvent; installEvent = null;
       try {
