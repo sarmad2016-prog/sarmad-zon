@@ -22,16 +22,21 @@
   let choiceMade = false;
   const style = document.createElement('style');
   style.textContent = `
-    #szInstallPrompt{position:sticky;top:0;z-index:99999;margin:0 auto 14px;width:min(100% - 20px,900px);padding:17px 20px;border:2px solid #b8d4c3;border-radius:17px;background:linear-gradient(135deg,#f1fff6,#e4f3e9);color:#123b28;box-shadow:0 7px 24px #102d1b24;text-align:center;font-family:Tahoma,Arial,sans-serif}
+    #szInstallPrompt{position:sticky;top:env(safe-area-inset-top,8px);z-index:99999;margin:8px auto 12px;width:calc(100% - 24px);max-width:560px;padding:12px 16px;border:1px solid #b8d4c3;border-radius:14px;background:linear-gradient(135deg,#f7fff9,#e8f4ec);color:#123b28;box-shadow:0 4px 16px #102d1b20;text-align:center;font-family:Tahoma,Arial,sans-serif}
     #szInstallPrompt[hidden]{display:none!important}
-    #szInstallPrompt .sz-title{font-size:clamp(19px,2.5vw,24px);font-weight:800;margin:0 0 7px}
-    #szInstallPrompt .sz-desc{font-size:16px;line-height:1.7;margin:0 0 13px}
-    #szInstallPrompt .sz-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap}
-    #szInstallPrompt button{min-width:112px;border:0;border-radius:11px;padding:11px 22px;font-size:17px;font-weight:800;cursor:pointer}
+    #szInstallPrompt .sz-title{font-size:18px;font-weight:800;margin:0 0 4px;line-height:1.4}
+    #szInstallPrompt .sz-desc{font-size:13px;line-height:1.5;margin:0 0 9px}
+    #szInstallPrompt .sz-actions{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+    #szInstallPrompt button{min-width:100px;border:0;border-radius:9px;padding:8px 17px;font-size:14px;font-weight:800;cursor:pointer}
     #szInstallYes{background:#0d633b;color:#fff}
     #szInstallNo{background:#e4e9e5;color:#25372c}
-    #szInstallHelp{font-size:14px;line-height:1.7;margin:12px 0 0}
-    @media(max-width:520px){#szInstallPrompt{padding:15px 12px}#szInstallPrompt .sz-desc{font-size:15px}#szInstallPrompt button{flex:1}}
+    #szInstallHelp{font-size:12px;line-height:1.6;margin:8px 0 0}
+    @media(max-width:520px){
+      #szInstallPrompt{width:calc(100% - 20px);margin:6px auto 10px;padding:10px 12px;border-radius:12px}
+      #szInstallPrompt .sz-title{font-size:16px}
+      #szInstallPrompt .sz-desc{font-size:12px;margin-bottom:7px}
+      #szInstallPrompt button{flex:1;min-width:0;padding:8px 10px;font-size:13px}
+    }
   `;
   document.head.appendChild(style);
   const box = document.createElement('section');
@@ -72,5 +77,9 @@
       : 'من قائمة المتصفح (⋮) اختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية». إذا لم يظهر الخيار، افتح الرابط بمتصفح Chrome.';
   });
   try { if (sessionStorage.getItem(declinedKey) === '1') choiceMade = true; } catch (_) {}
-  if (!choiceMade) setTimeout(show, 700);
+  if (!choiceMade) {
+    const reveal = () => { if (!standalone()) show(); };
+    if (document.readyState === 'complete') setTimeout(reveal, 350);
+    else window.addEventListener('load', () => setTimeout(reveal, 350), { once: true });
+  }
 })();
