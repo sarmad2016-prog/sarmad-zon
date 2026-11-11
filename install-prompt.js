@@ -11,7 +11,10 @@
   const standalone = () =>
     (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
     navigator.standalone === true;
-  try { if (localStorage.getItem(installedKey) === '1' || standalone()) return; } catch (_) {}
+  try {
+    if (localStorage.getItem(installedKey) === '1') return;
+    if (standalone()) { localStorage.setItem(installedKey, '1'); return; }
+  } catch (_) {}
   if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
     window.addEventListener('load', () => navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(() => {}));
   }
