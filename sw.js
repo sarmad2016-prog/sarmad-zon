@@ -1,7 +1,6 @@
 const CACHE_NAME = "sarmad-zone-v1";
 const APP_SCOPE = new URL(self.registration.scope);
 const APP_FILES = [
-  "./",
   "./library/",
   "./cv/",
   "./games/",
