@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>منشئ السيرة الذاتية</title>
-<link rel="manifest" href="../manifest.webmanifest">
+<link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0f766e">
 <link rel="apple-touch-icon" href="../icon.svg">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -83,7 +83,7 @@ textarea{min-height:70px;resize:vertical}
 <body>
 <header>
 <h1 id="ttl"></h1>
-<button class="btn" id="bInst" hidden>📲 تثبيت</button><span class="seg"><button class="btn" data-mode="simple" id="mS"></button><button class="btn" data-mode="adv" id="mA"></button></span><button class="btn" id="bSet">⚙️</button><button class="btn" id="bTheme"></button><button class="btn" id="bLang">EN</button><button class="btn" id="bTr"></button>
+<span class="seg"><button class="btn" data-mode="simple" id="mS"></button><button class="btn" data-mode="adv" id="mA"></button></span><button class="btn" id="bSet">⚙️</button><button class="btn" id="bTheme"></button><button class="btn" id="bLang">EN</button><button class="btn" id="bTr"></button>
 <button class="btn" id="bDoc">Word</button><button class="btn" id="bShare"></button>
 <button class="btn p" id="bPdf"></button>
 </header>
@@ -23408,13 +23408,8 @@ const blob=await D.Packer.toBlob(doc),nm=(d.name||'CV').replace(/\s+/g,'_')+'.do
 await save2(new File([blob],nm,{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'}),nm)}
 function setView(v){document.body.dataset.view=v;$('#tE').classList.toggle('on',v=='edit');$('#tP').classList.toggle('on',v=='prev');window.scrollTo(0,0);preview()}
 document.body.dataset.view='edit';applyTheme();form();
-(function(){const b=document.getElementById('bInst');let dp=null;const ios=/iphone|ipad|ipod/i.test(navigator.userAgent),sa=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
-if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{});
-if(sa)return;
-addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;b.hidden=false});
-if(ios)b.hidden=false;
-b.onclick=async()=>{if(dp){dp.prompt();try{await dp.userChoice}catch(e){}dp=null;b.hidden=true}else toast(S.lang=='ar'?'في آيفون: اضغط زر المشاركة ثم "إضافة إلى الشاشة الرئيسية"':'On iPhone: tap Share, then "Add to Home Screen"',7000)};
-addEventListener('appinstalled',()=>{b.hidden=true})})();
+
 </script>
+<script src="../install-prompt.js"></script>
 </body>
 </html>
