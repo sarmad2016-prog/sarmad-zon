@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>منشئ السيرة الذاتية</title>
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="manifest" href="../manifest.webmanifest">
 <meta name="theme-color" content="#0f766e">
-<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="apple-touch-icon" href="../icon.svg">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="سيرتي">
@@ -23409,7 +23409,7 @@ await save2(new File([blob],nm,{type:'application/vnd.openxmlformats-officedocum
 function setView(v){document.body.dataset.view=v;$('#tE').classList.toggle('on',v=='edit');$('#tP').classList.toggle('on',v=='prev');window.scrollTo(0,0);preview()}
 document.body.dataset.view='edit';applyTheme();form();
 (function(){const b=document.getElementById('bInst');let dp=null;const ios=/iphone|ipad|ipod/i.test(navigator.userAgent),sa=matchMedia('(display-mode: standalone)').matches||navigator.standalone;
-if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator&&/^https?:$/.test(location.protocol))navigator.serviceWorker.register('../sw.js',{scope:'../'}).catch(()=>{});
 if(sa)return;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();dp=e;b.hidden=false});
 if(ios)b.hidden=false;
