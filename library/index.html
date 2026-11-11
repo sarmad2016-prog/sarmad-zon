@@ -284,39 +284,7 @@ soon.textContent = "برامج جديدة قريباً";
 list.appendChild(soon);
 </script>
 
-<button id="installSarmadApp" type="button" hidden style="position:fixed;bottom:18px;left:18px;z-index:9999;border:0;border-radius:999px;padding:13px 20px;background:#0d3f29;color:#fff;font:700 15px Tajawal,Arial,sans-serif;box-shadow:0 5px 18px #0003;cursor:pointer">📲 تثبيت Sarmad Zone</button>
-<script>
-(() => {
-  const btn = document.getElementById('installSarmadApp');
-  let promptEvent = null;
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const isStandalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-  if (isStandalone) return;
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(() => {});
-    });
-  }
-  window.addEventListener('beforeinstallprompt', event => {
-    event.preventDefault();
-    promptEvent = event;
-    btn.hidden = false;
-  });
-  if (isIOS) btn.hidden = false;
-  btn.addEventListener('click', async () => {
-    if (promptEvent) {
-      promptEvent.prompt();
-      try { await promptEvent.userChoice; } catch (_) {}
-      promptEvent = null;
-      btn.hidden = true;
-    } else if (isIOS) {
-      alert('لتثبيت Sarmad Zone على الآيفون: اضغط زر المشاركة في المتصفح، ثم اختر «إضافة إلى الشاشة الرئيسية».');
-    } else {
-      alert('خيار التثبيت غير متاح حالياً. افتح الصفحة بمتصفح Chrome وانتظر ظهور خيار التثبيت.');
-    }
-  });
-  window.addEventListener('appinstalled', () => { btn.hidden = true; });
-})();
-</script>
+
+<script src="../install-prompt.js"></script>
 </body>
 </html>
