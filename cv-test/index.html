@@ -23377,7 +23377,7 @@ ${tx}`;
    if(rows.length)d[k]=rows.map(o=>Object.assign({},BL[k],o));
   }
  });
- const h=tx.slice(0,1200),ar=(h.match(/[\\u0600-\\u06FF]/g)||[]).length,la=(h.match(/[A-Za-z]/g)||[]).length;
+ const h=tx.slice(0,1200),ar=(h.match(/[\u0600-\u06FF]/g)||[]).length,la=(h.match(/[A-Za-z]/g)||[]).length;
  S.lang=ar>la?'ar':'en';form();toast(t().done);
 }
 function localImport(tx){const d=S.d,m=re=>{const x=tx.match(re);return x?x[0]:''};const em=m(/[\w.+-]+@[\w-]+\.[\w.-]+/),ph=m(/\+?\d[\d\s().-]{8,}\d/),li=m(/(https?:\/\/)?(www\.)?linkedin\.com\/[^\s]+/i),gh=m(/(https?:\/\/)?(www\.)?github\.com\/[^\s]+/i);
@@ -23431,7 +23431,7 @@ function pj(x){
  let depth=0,inStr=false,escape=false,end=-1;
  for(let i=start;i<clean.length;i++){
   const c=clean[i];
-  if(inStr){if(escape)escape=false;else if(c==='\\\\')escape=true;else if(c==='"')inStr=false;continue}
+  if(inStr){if(escape)escape=false;else if(c==='\\')escape=true;else if(c==='"')inStr=false;continue}
   if(c==='"'){inStr=true;continue}
   if(c==='{')depth++;
   else if(c==='}'&&--depth===0){end=i;break}
