@@ -23285,7 +23285,8 @@ async function pdfPages(f){
    const pg=await doc.getPage(i),c=await pg.getTextContent();
    const native=c.items.map(x=>x.str+(x.hasEOL?'\n':' ')).join('').trim();
    const useful=(native.match(/[A-Za-z0-9\u0600-\u06FF]/g)||[]).length;
-   if(useful>=24){t+=native+'\n';}
+   const hasArabic=/[\u0600-\u06FF]/.test(native);
+   if(useful>=24&&!hasArabic){t+=native+'\n';}
    else{
     if(!worker)worker=await makeOCRWorker();
     const vp=pg.getViewport({scale:2.1}),cv=document.createElement('canvas');
