@@ -49,7 +49,7 @@
       header.insertBefore(button, header.firstChild);
     }
   };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, {once:true}); else mount();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { mount(); button.hidden = false; }, {once:true}); else { mount(); button.hidden = false; }
   window.addEventListener('beforeinstallprompt', event => { event.preventDefault(); installEvent = event; });
   window.addEventListener('appinstalled', hideAsInstalled);
   button.addEventListener('click', async () => {
