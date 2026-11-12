@@ -27,8 +27,8 @@
     #szInstallBtn{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:30px;padding:5px 10px;border:1px solid #b8d4c3;border-radius:9px;background:#edf7f0;color:#145235;font:700 12px/1.2 Tahoma,Arial,sans-serif;cursor:pointer;white-space:nowrap;box-shadow:0 2px 7px #102d1b12}
     #szInstallBtn[hidden]{display:none!important}
     #szInstallBtn:active{transform:scale(.97)}
-    body:has(>header #szInstallBtn) > header{position:relative}
-    body:has(>header #szInstallBtn) > header #szInstallBtn{position:absolute;top:10px;right:12px}
+    body.sz-library > header{position:relative}
+    body.sz-library > header #szInstallBtn{position:absolute;top:10px;right:12px}
     @media(max-width:520px){#szInstallBtn{min-height:27px;padding:4px 8px;font-size:11px;border-radius:8px}}
   `;
   document.head.appendChild(style);
@@ -40,6 +40,7 @@
   const mount = () => {
     const header = document.querySelector('body > header') || document.querySelector('header.top');
     if (!header) return;
+    if (!path.includes('/cv/') && !path.includes('/games/')) document.body.classList.add('sz-library');
     if (path.includes('/games/')) {
       const tools = header.querySelector('.tools');
       if (tools) tools.insertBefore(button, tools.firstChild); else header.appendChild(button);
