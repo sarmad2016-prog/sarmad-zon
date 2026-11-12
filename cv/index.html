@@ -23251,21 +23251,92 @@ const yr=e=>{const p=String(e.period||'').replace(/[٠-٩]/g,c=>'٠١٢٣٤٥٦�
 a=[...a].sort((x,y)=>{const p=yr(x),q=yr(y);return p[0]-q[0]||p[1]-q[1]});return m=='new'?a.reverse():a}
 function yearsExp(){const cy=new Date().getFullYear(),iv=[];vis('exp').forEach(e=>{const p=String(e.period||'').replace(/[٠-٩]/g,c=>'٠١٢٣٤٥٦٧٨٩'.indexOf(c)),ys=(p.match(/(19|20)\d{2}/g)||[]).map(Number);if(!ys.length)return;const now=/now|present|current|حتى الآن|الآن|حالي|اليوم|مستمر/i.test(p),a=Math.min(...ys);iv.push([a,Math.max(now?cy:Math.max(...ys),a)])});
 iv.sort((a,b)=>a[0]-b[0]);let tot=0,cs=null,ce=null;iv.forEach(([a,b])=>{if(cs===null){cs=a;ce=b}else if(a<=ce)ce=Math.max(ce,b);else{tot+=ce-cs;cs=a;ce=b}});if(cs!==null)tot+=ce-cs;return tot||(iv.length?1:0)}
-async function pdfPages(f){if(typeof pdfjsLib==='undefined')throw{code:'nopdf'};pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';const doc=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;let t='';const imgs=[];
-for(let i=1;i<=doc.numPages;i++){const pg=await doc.getPage(i),c=await pg.getTextContent();t+=c.items.map(x=>x.str+(x.hasEOL?'\n':' ')).join('')+'\n';
-if(i<=3){const vp=pg.getViewport({scale:1.6}),cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;imgs.push(cv.toDataURL('image/jpeg',.8).split(',')[1])}}
-return {t,imgs}}
-async function fileText(f){const n=f.name.toLowerCase();
-if(n.endsWith('.pdf'))return pdfPages(f);
-if(n.endsWith('.docx')){if(typeof mammoth==='undefined')throw{code:'nodoc'};return {t:(await mammoth.extractRawText({arrayBuffer:await f.arrayBuffer()})).value,imgs:[]}}
-if(/\.(png|jpe?g|webp)$/.test(n)){const im=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=URL.createObjectURL(f)});const c=document.createElement('canvas'),m=Math.min(1,1600/Math.max(im.width,im.height));c.width=im.width*m;c.height=im.height*m;c.getContext('2d').drawImage(im,0,0,c.width,c.height);return {t:'',imgs:[c.toDataURL('image/jpeg',.85).split(',')[1]]}}
-return {t:await f.text(),imgs:[]}}
-async function importCV(f){toast(t().wait,90000);const fr=await fileText(f),tx=fr.t.replace(/[ \t]+\n/g,'\n').slice(0,9000),vision=fr.imgs.length>0&&['claude','openai'].includes(G.ai.prov);
-if(!vision&&tx.trim().length<30)throw{code:'noext'};
-let r;try{r=await AI(`Extract resume data into JSON only, with this exact shape: {"name":"","title":"","email":"","phone":"","city":"","summary":"","skills":"comma separated","langs":"comma separated","li":"","gh":"","web":"","exp":[{"role":"","org":"","period":"","desc":""}],"edu":[{"deg":"","school":"","period":""}],"proj":[{"name":"","link":"","desc":""}],"crs":[{"name":"","org":"","year":"","cid":"","url":""}],"ref":[{"name":"","org":"","phone":"","email":""}]}. ${vision?'The resume pages are attached as images: read them visually, they are the primary source. The extracted text below is only a hint and may be garbled.':'The text was extracted from a file and may have garbled or reversed Arabic word order or spacing: repair it.'} Do not invent facts; use empty strings when missing. Keep the original language. Put job tasks in desc as separate lines. For certificates/courses put the course name in name, issuer in org and year in year.\n\n${tx}`,true,'default',vision?fr.imgs:null)}catch(e){if(!localImport(tx))throw e;return}
-S.bak=JSON.stringify({d:S.d,lang:S.lang});const d=S.d;['name','title','email','phone','city','summary','skills','langs','li','gh','web'].forEach(k=>{if(typeof r[k]=='string'&&r[k].trim())d[k]=r[k].trim()});
-['exp','edu','proj','crs','ref'].forEach(k=>{if(Array.isArray(r[k])&&r[k].length)d[k]=r[k].map(o=>Object.assign({},BL[k],o))});
-const h=(tx||JSON.stringify(r)).slice(0,600),ar=(h.match(/[\u0600-\u06FF]/g)||[]).length,la=(h.match(/[A-Za-z]/g)||[]).length;S.lang=ar>la?'ar':'en';form();toast(t().done)}
+let ocrScriptPromise=null;
+async function getOCR(){
+ if(typeof Tesseract!=='undefined')return Tesseract;
+ if(!ocrScriptPromise)ocrScriptPromise=new Promise((resolve,reject)=>{
+  const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+  s.onload=()=>typeof Tesseract!=='undefined'?resolve(Tesseract):reject({code:'ocrfail'});
+  s.onerror=()=>reject({code:'ocrnet'});
+  document.head.appendChild(s);
+ });
+ return ocrScriptPromise;
+}
+async function makeOCRWorker(){
+ const lib=await getOCR();
+ return lib.createWorker('ara+eng',1,{langPath:'https://tessdata.projectnaptha.com/4.0.0'});
+}
+async function recognizeCanvas(worker,canvas){
+ const r=await worker.recognize(canvas);
+ return String(r&&r.data&&r.data.text||'').trim();
+}
+function cleanImportText(s){
+ return String(s||'').replace(/\u0640/g,'').replace(/[ \t]+\n/g,'\n').replace(/\n{3,}/g,'\n\n').trim();
+}
+async function pdfPages(f){
+ if(typeof pdfjsLib==='undefined')throw{code:'nopdf'};
+ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+ const doc=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
+ if(doc.numPages>30)throw{code:'toomanypages'};
+ let t='',worker=null,ocrCount=0;
+ try{
+  for(let i=1;i<=doc.numPages;i++){
+   const pg=await doc.getPage(i),c=await pg.getTextContent();
+   const native=c.items.map(x=>x.str+(x.hasEOL?'\n':' ')).join('').trim();
+   const useful=(native.match(/[A-Za-z0-9\u0600-\u06FF]/g)||[]).length;
+   if(useful>=24){t+=native+'\n';}
+   else{
+    if(!worker)worker=await makeOCRWorker();
+    const vp=pg.getViewport({scale:2.1}),cv=document.createElement('canvas');
+    cv.width=Math.ceil(vp.width);cv.height=Math.ceil(vp.height);
+    const ctx=cv.getContext('2d',{willReadFrequently:false});
+    await pg.render({canvasContext:ctx,viewport:vp}).promise;
+    const recognized=await recognizeCanvas(worker,cv);
+    t+=(recognized||native)+'\n';
+    cv.width=0;cv.height=0;ocrCount++;
+   }
+   toast((S.lang==='ar'?'قراءة الصفحة ':'Reading page ')+i+'/'+doc.numPages,90000);
+  }
+ }finally{if(worker)try{await worker.terminate()}catch(e){}}
+ return {t:cleanImportText(t),imgs:[],ocrCount};
+}
+async function fileText(f){
+ const n=f.name.toLowerCase();
+ if(n.endsWith('.pdf'))return pdfPages(f);
+ if(n.endsWith('.docx')){
+  if(typeof mammoth==='undefined')throw{code:'nodoc'};
+  return {t:(await mammoth.extractRawText({arrayBuffer:await f.arrayBuffer()})).value,imgs:[]};
+ }
+ if(f.type&&f.type.startsWith('image/')||/\.(png|jpe?g|webp|bmp|tiff?)$/.test(n)){
+  const u=URL.createObjectURL(f);
+  try{
+   const im=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=u});
+   const scale=Math.min(1,2400/Math.max(im.width,im.height));
+   const cv=document.createElement('canvas');cv.width=Math.max(1,Math.round(im.width*scale));cv.height=Math.max(1,Math.round(im.height*scale));
+   cv.getContext('2d').drawImage(im,0,0,cv.width,cv.height);
+   const worker=await makeOCRWorker();
+   try{return {t:cleanImportText(await recognizeCanvas(worker,cv)),imgs:[]}}
+   finally{await worker.terminate();cv.width=0;cv.height=0}
+  }finally{URL.revokeObjectURL(u)}
+ }
+ return {t:await f.text(),imgs:[]};
+}
+async function importCV(f){
+ toast(S.lang==='ar'?'جارٍ قراءة الملف...':'Reading file...',90000);
+ const fr=await fileText(f),tx=cleanImportText(fr.t).slice(0,18000);
+ if(tx.trim().length<30)throw{code:'noext'};
+ let r;
+ try{
+  r=await AI(\`Extract resume data into JSON only, with this exact shape: {"name":"","title":"","email":"","phone":"","city":"","summary":"","skills":"comma separated","langs":"comma separated","li":"","gh":"","web":"","exp":[{"role":"","org":"","period":"","desc":""}],"edu":[{"deg":"","school":"","period":""}],"proj":[{"name":"","link":"","desc":""}],"crs":[{"name":"","org":"","year":"","cid":"","url":""}],"ref":[{"name":"","org":"","phone":"","email":""}]}. The source may contain Arabic and English OCR text. Read Arabic naturally from right to left; do not reverse words or whole lines. Repair only obvious OCR spacing errors. Preserve names, phone numbers, email addresses, URLs, job titles and especially dates exactly as written. Do not invent facts; use empty strings when missing. Keep the original language. Put job tasks in desc as separate lines. For certificates/courses put the course name in name, issuer in org and year in year. Return only valid JSON.\\n\\nRESUME TEXT:\\n\${tx}\`,true,'default');
+ }catch(e){if(!localImport(tx))throw e;return}
+ if(!r||typeof r!=='object')throw{code:'badjson'};
+ S.bak=JSON.stringify({d:S.d,lang:S.lang});const d=S.d;
+ ['name','title','email','phone','city','summary','skills','langs','li','gh','web'].forEach(k=>{if(typeof r[k]=='string'&&r[k].trim())d[k]=r[k].trim()});
+ ['exp','edu','proj','crs','ref'].forEach(k=>{if(Array.isArray(r[k])&&r[k].length)d[k]=r[k].map(o=>Object.assign({},BL[k],o))});
+ const h=(tx||JSON.stringify(r)).slice(0,600),ar=(h.match(/[\u0600-\u06FF]/g)||[]).length,la=(h.match(/[A-Za-z]/g)||[]).length;
+ S.lang=ar>la?'ar':'en';form();toast(t().done);
+}
 function localImport(tx){const d=S.d,m=re=>{const x=tx.match(re);return x?x[0]:''};const em=m(/[\w.+-]+@[\w-]+\.[\w.-]+/),ph=m(/\+?\d[\d\s().-]{8,}\d/),li=m(/(https?:\/\/)?(www\.)?linkedin\.com\/[^\s]+/i),gh=m(/(https?:\/\/)?(www\.)?github\.com\/[^\s]+/i);
 if(!em&&!ph&&!li&&!gh)return false;S.bak=JSON.stringify({d:S.d,lang:S.lang});if(em)d.email=em;if(ph)d.phone=ph.trim();if(li)d.li=li;if(gh)d.gh=gh;form();toast(t().e8,6000);return true}
 function body(k){const d=DD(),lst=s=>s.split(/[,،]/).map(x=>x.trim()).filter(Boolean),f=S.tpl;
@@ -23308,7 +23379,7 @@ ats();if($('#yrs'))$('#yrs').textContent=yearsExp();if($('#pg'))$('#pg').textCon
 addEventListener('resize',preview);
 function applyTheme(){const r=document.documentElement;if(G.theme=='system')r.removeAttribute('data-theme');else r.setAttribute('data-theme',G.theme);const b=$('#bTheme');b.textContent={light:'☀️',dark:'🌙',system:'🖥️'}[G.theme]}
 function goTo(i){if(i==7){S.tpl='ats';S.color=TPLC.ats;form();return}const q=['[data-k=email]','[data-k=phone]','[data-k=summary]','[data-k=skills]','[data-l=exp][data-f=desc]','[data-l=exp][data-f=desc]','[data-l=edu][data-f=deg]'][i],e=document.querySelector(q);if(e){e.scrollIntoView({block:'center',behavior:'smooth'});e.focus()}}
-function errMsg(er){const L=t(),c=er&&er.code;if(c=='nokey')return L.e4;if(c=='net')return L.e5;if(c=='noext')return L.e6;if(c=='badjson')return L.e7+(er.raw?' ['+String(er.raw).replace(/\s+/g,' ').slice(0,70)+']':'');return c=='not_granted'?L.e1:(c=='unavailable'||c=='no_runtime')?L.e2:c=='rate_limited'?L.e3:c=='empty'?L.fill:L.err+' ('+(c||'?')+')'}
+function errMsg(er){const L=t(),c=er&&er.code;if(c=='nokey')return L.e4;if(c=='net')return L.e5;if(c=='ocrnet')return S.lang=='ar'?'تعذر تحميل محرك قراءة الصور. تحقق من اتصال الإنترنت ثم أعد المحاولة.':'Could not load the OCR engine. Check your internet connection and try again.';if(c=='ocrfail')return S.lang=='ar'?'تعذرت قراءة الصورة. جرّب صورة أوضح.':'Could not read the image. Try a clearer image.';if(c=='toomanypages')return S.lang=='ar'?'الملف يتجاوز 30 صفحة. قسّمه إلى ملفات أصغر ثم أعد المحاولة.':'The file exceeds 30 pages. Split it into smaller files and try again.';if(c=='noext')return L.e6;if(c=='badjson')return L.e7+(er.raw?' ['+String(er.raw).replace(/\s+/g,' ').slice(0,70)+']':'');return c=='not_granted'?L.e1:(c=='unavailable'||c=='no_runtime')?L.e2:c=='rate_limited'?L.e3:c=='empty'?L.fill:L.err+' ('+(c||'?')+')'}
 function pj(x){const raw=String(x);x=raw.replace(/```json|```/g,'');const i=x.indexOf('{'),j=x.lastIndexOf('}');if(i<0||j<i)throw{code:'badjson',raw};try{return JSON.parse(x.slice(i,j+1))}catch(e){throw{code:'badjson',raw}}}
 async function ext(p,prov,imgs){const a=G.ai;let r,tx;
 if(prov=='claude'){if(!a.ckey)throw{code:'nokey'};r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':a.ckey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:a.cmodel,max_tokens:4000,messages:[{role:'user',content:imgs&&imgs.length?[...imgs.map(d=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:d}})),{type:'text',text:p}]:p}]})});if(!r.ok)throw{code:'http'+r.status};const j=await r.json();tx=(j.content||[]).map(c=>c.text||'').join('')}
