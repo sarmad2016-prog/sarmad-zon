@@ -23352,15 +23352,6 @@ ${chunks[i]}`;
   return n;
  };
  if(!r||typeof r!=='object')throw{code:'badjson'};
- if(countData(r)<=1){
-  const retry=`Re-examine the full resume carefully. Your previous extraction missed most of the content. Extract the candidate name, phone, profession, employment history, education, skills and certificates from the text. Pay special attention to Arabic section headings and Arabic dates. Return a complete JSON object using exactly this schema:
-{"name":"","title":"","email":"","phone":"","city":"","summary":"","skills":"","langs":"","li":"","gh":"","web":"","exp":[{"role":"","org":"","period":"","desc":""}],"edu":[{"deg":"","school":"","period":""}],"proj":[{"name":"","link":"","desc":""}],"crs":[{"name":"","org":"","year":"","cid":"","url":""}],"ref":[{"name":"","org":"","phone":"","email":""}]}
-Do not stop after finding an email. If a section is present, fill it. Do not invent facts. JSON only.
-
-FULL RESUME TEXT:
-${tx}`;
-  r=await AI(retry,true,'default');
- }
  if(!r||typeof r!=='object'||countData(r)<=1)throw{code:'noresume'};
  S.bak=JSON.stringify({d:S.d,lang:S.lang});const d=S.d;
  ['name','title','email','phone','city','summary','skills','langs','li','gh','web'].forEach(k=>{if(hasText(r[k]))d[k]=String(r[k]).trim()});
