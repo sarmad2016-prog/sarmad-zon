@@ -6,7 +6,8 @@
 <title>منشئ السيرة الذاتية</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0f766e">
-<link rel="apple-touch-icon" href="../icon.svg">
+<link rel="icon" type="image/svg+xml" href="cv-icon.svg">
+<link rel="apple-touch-icon" href="cv-icon.svg">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="سيرتي">
@@ -82,6 +83,7 @@ textarea{min-height:70px;resize:vertical}
 </head>
 <body>
 <header>
+<button id="szInstallBtn" class="btn" type="button" hidden>＋ تثبيت CV</button>
 <h1 id="ttl"></h1>
 <span class="seg"><button class="btn" data-mode="simple" id="mS"></button><button class="btn" data-mode="adv" id="mA"></button></span><button class="btn" id="bSet">⚙️</button><button class="btn" id="bTheme"></button><button class="btn" id="bLang">EN</button><button class="btn" id="bTr"></button>
 <button class="btn" id="bDoc">Word</button><button class="btn" id="bShare"></button>
