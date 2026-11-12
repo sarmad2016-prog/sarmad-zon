@@ -23327,29 +23327,22 @@ async function importCV(f){
  toast(S.lang==='ar'?'جارٍ قراءة الملف...':'Reading file...',90000);
  const fr=await fileText(f),tx=cleanImportText(fr.t).slice(0,24000);
  if(tx.trim().length<30)throw{code:'noext'};
- const prompt=`You are an expert resume/CV data extraction system. Read the ENTIRE resume text below and extract every factual detail into ONE valid JSON object. The text may be Arabic, English, or mixed. Arabic is written right-to-left: preserve its natural word order and do not reverse lines.
+ const schema='{"name":"","title":"","email":"","phone":"","city":"","summary":"","skills":"","langs":"","li":"","gh":"","web":"","exp":[{"role":"","org":"","period":"","desc":""}],"edu":[{"deg":"","school":"","period":""}],"proj":[{"name":"","link":"","desc":""}],"crs":[{"name":"","org":"","year":"","cid":"","url":""}],"ref":[{"name":"","org":"","phone":"","email":""}]}';
+ const chunks=[];let rest=tx;
+ while(rest.length){if(rest.length<=5200){chunks.push(rest);break}let cut=rest.lastIndexOf('\n',5200);if(cut<2600)cut=5200;chunks.push(rest.slice(0,cut));rest=rest.slice(cut).trimStart()}
+ if(chunks.length>6)throw{code:'toolong'};
+ let r={};
+ for(let i=0;i<chunks.length;i++){
+  const prompt=`You are an expert resume/CV data extraction system. Extract ALL facts present in this resume text segment into one valid JSON object using this exact schema:
+${schema}
+The text may be Arabic, English or mixed. Read Arabic naturally right-to-left. Extract name, title, phone, email, city, summary, skills, languages and profile links. Every job is a separate exp item (role, org, period, desc). Every education item is separate (deg, school, period). Every certificate/course is separate (name, org, year). Include projects and references if present. Preserve names, dates and numbers. Do not invent facts. Use empty strings and arrays for missing data. Return JSON only.
 
-Return exactly this schema and every key must be present:
-{"name":"","title":"","email":"","phone":"","city":"","summary":"","skills":"","langs":"","li":"","gh":"","web":"","exp":[{"role":"","org":"","period":"","desc":""}],"edu":[{"deg":"","school":"","period":""}],"proj":[{"name":"","link":"","desc":""}],"crs":[{"name":"","org":"","year":"","cid":"","url":""}],"ref":[{"name":"","org":"","phone":"","email":""}]}
-
-Extraction rules:
-- Extract the candidate's full name, job title/profession, phone, email, city and profile links wherever they appear.
-- Extract EVERY work experience as a separate exp item. Put position in role, employer in org, dates exactly as written in period, and duties/responsibilities in desc.
-- Extract EVERY education entry as a separate edu item. Put qualification/degree in deg, school/university in school, and dates in period.
-- Extract skills and languages as comma-separated strings.
-- Extract every certificate/course as a separate crs item; course name in name, provider in org, year/date in year.
-- Include projects and references when present.
-- Do not put the email alone and stop. Continue through the complete document and all sections.
-- Do not invent or infer missing facts. Use empty strings or empty arrays for information not present.
-- Preserve names, numbers, dates and URLs accurately. Return JSON only, with no markdown or explanation.
-
-RESUME TEXT:
-${tx}`;
- let r;
- try{
-  r=await AI(prompt,true,'default');
- }catch(e){
-  throw e;
+This is segment ${i+1} of ${chunks.length}; do not assume the resume ends at this segment:
+${chunks[i]}`;
+  const part=await AI(prompt,true,'default');
+  if(!part||typeof part!=='object')throw{code:'badjson'};
+  ['name','title','email','phone','city','summary','skills','langs','li','gh','web'].forEach(k=>{if(!r[k]&&typeof part[k]==='string'&&part[k].trim())r[k]=part[k].trim()});
+  ['exp','edu','proj','crs','ref'].forEach(k=>{if(Array.isArray(part[k]))r[k]=(r[k]||[]).concat(part[k].filter(o=>o&&typeof o==='object'&&Object.values(o).some(v=>typeof v==='string'&&v.trim())))});
  }
  const hasText=v=>typeof v==='string'&&v.trim().length>0;
  const countData=o=>{
@@ -23422,7 +23415,7 @@ ats();if($('#yrs'))$('#yrs').textContent=yearsExp();if($('#pg'))$('#pg').textCon
 addEventListener('resize',preview);
 function applyTheme(){const r=document.documentElement;if(G.theme=='system')r.removeAttribute('data-theme');else r.setAttribute('data-theme',G.theme);const b=$('#bTheme');b.textContent={light:'☀️',dark:'🌙',system:'🖥️'}[G.theme]}
 function goTo(i){if(i==7){S.tpl='ats';S.color=TPLC.ats;form();return}const q=['[data-k=email]','[data-k=phone]','[data-k=summary]','[data-k=skills]','[data-l=exp][data-f=desc]','[data-l=exp][data-f=desc]','[data-l=edu][data-f=deg]'][i],e=document.querySelector(q);if(e){e.scrollIntoView({block:'center',behavior:'smooth'});e.focus()}}
-function errMsg(er){const L=t(),c=er&&er.code;if(c=='nokey')return L.e4;if(c=='net')return L.e5;if(c=='ocrnet')return S.lang=='ar'?'تعذر تحميل محرك قراءة الصور. تحقق من اتصال الإنترنت ثم أعد المحاولة.':'Could not load the OCR engine. Check your internet connection and try again.';if(c=='ocrfail')return S.lang=='ar'?'تعذرت قراءة الصورة. جرّب صورة أوضح.':'Could not read the image. Try a clearer image.';if(c=='toomanypages')return S.lang=='ar'?'الملف يتجاوز 30 صفحة. قسّمه إلى ملفات أصغر ثم أعد المحاولة.':'The file exceeds 30 pages. Split it into smaller files and try again.';if(c=='noext')return L.e6;if(c=='noresume')return S.lang=='ar'?'تمت قراءة الملف، لكن تعذر استخراج بيانات السيرة. جرّب ملفاً أوضح أو أعد المحاولة.':'The file was read, but resume details could not be extracted. Try a clearer file or retry.';if(c=='badjson')return L.e7+(er.raw?' ['+String(er.raw).replace(/\s+/g,' ').slice(0,70)+']':'');return c=='not_granted'?L.e1:(c=='unavailable'||c=='no_runtime')?L.e2:c=='rate_limited'?L.e3:c=='empty'?L.fill:L.err+' ('+(c||'?')+')'}
+function errMsg(er){const L=t(),c=er&&er.code;if(c=='nokey')return L.e4;if(c=='net')return L.e5;if(c=='ocrnet')return S.lang=='ar'?'تعذر تحميل محرك قراءة الصور. تحقق من اتصال الإنترنت ثم أعد المحاولة.':'Could not load the OCR engine. Check your internet connection and try again.';if(c=='ocrfail')return S.lang=='ar'?'تعذرت قراءة الصورة. جرّب صورة أوضح.':'Could not read the image. Try a clearer image.';if(c=='toomanypages')return S.lang=='ar'?'الملف يتجاوز 30 صفحة. قسّمه إلى ملفات أصغر ثم أعد المحاولة.':'The file exceeds 30 pages. Split it into smaller files and try again.';if(c=='noext')return L.e6;if(c=='noresume')return S.lang=='ar'?'تمت قراءة الملف، لكن تعذر استخراج بيانات السيرة. جرّب ملفاً أوضح أو أعد المحاولة.':'The file was read, but resume details could not be extracted. Try a clearer file or retry.';if(c=='badjson')return L.e7+(er.raw?' ['+String(er.raw).replace(/\s+/g,' ').slice(0,70)+']':'');return c=='not_granted'?L.e1:(c=='unavailable'||c=='no_runtime')?L.e2:c=='rate_limited'?L.e3:c=='empty'?L.fill:L.err+' ('+(c||'?')+')'+(er&&er.detail?' — '+String(er.detail).slice(0,180):'')}
 function pj(x){
  const raw=String(x||'').trim();
  const clean=raw.replace(/```(?:json)?/gi,'').trim();
@@ -23440,8 +23433,8 @@ function pj(x){
  try{return JSON.parse(clean.slice(start,end+1))}catch(e){throw{code:'badjson',raw}}
 }
 async function ext(p,prov,imgs){const a=G.ai;let r,tx;
-if(prov=='claude'){if(!a.ckey)throw{code:'nokey'};r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':a.ckey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:a.cmodel,max_tokens:4000,messages:[{role:'user',content:imgs&&imgs.length?[...imgs.map(d=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:d}})),{type:'text',text:p}]:p}]})});if(!r.ok)throw{code:'http'+r.status};const j=await r.json();tx=(j.content||[]).map(c=>c.text||'').join('')}
-else{const o=prov=='openai';if(o&&!a.okey)throw{code:'nokey'};r=await fetch(o?'https://api.openai.com/v1/chat/completions':'https://text.pollinations.ai/openai',{method:'POST',headers:Object.assign({'content-type':'application/json'},o?{authorization:'Bearer '+a.okey}:{}),body:JSON.stringify({model:o?a.omodel:'openai',messages:[{role:'user',content:imgs&&imgs.length&&o?[...imgs.map(d=>({type:'image_url',image_url:{url:'data:image/jpeg;base64,'+d}})),{type:'text',text:p}]:p}]})});if(!r.ok)throw{code:'http'+r.status};const j=await r.json();tx=j.choices[0].message.content}
+if(prov=='claude'){if(!a.ckey)throw{code:'nokey'};r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':a.ckey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:a.cmodel,max_tokens:4000,messages:[{role:'user',content:imgs&&imgs.length?[...imgs.map(d=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:d}})),{type:'text',text:p}]:p}]})});if(!r.ok){const detail=(await r.text()).slice(0,500);throw{code:'http'+r.status,detail}}const j=await r.json();tx=(j.content||[]).map(c=>c.text||'').join('')}
+else{const o=prov=='openai';if(o&&!a.okey)throw{code:'nokey'};r=await fetch(o?'https://api.openai.com/v1/chat/completions':'https://text.pollinations.ai/openai',{method:'POST',headers:Object.assign({'content-type':'application/json'},o?{authorization:'Bearer '+a.okey}:{}),body:JSON.stringify({model:o?a.omodel:'openai',messages:[{role:'user',content:imgs&&imgs.length&&o?[...imgs.map(d=>({type:'image_url',image_url:{url:'data:image/jpeg;base64,'+d}})),{type:'text',text:p}]:p}]})});if(!r.ok){const detail=(await r.text()).slice(0,500);throw{code:'http'+r.status,detail}}const j=await r.json();tx=j.choices[0].message.content}
 return String(tx||'').trim()}
 async function AI(p,json,tier,imgs){const a=G.ai.prov;
 if(a=='auto'&&typeof claude!=='undefined'){try{const sm=await claude.use('sample');if(sm){const o={modelTier:tier||'quick',cache:false};return json?await sm.json(p,o):(await sm(p,o)).text.trim()}}catch(e){if(e&&e.code=='not_granted')throw e}}
