@@ -95,8 +95,6 @@ textarea{min-height:70px;resize:vertical}
 <nav class="tabbar"><button class="btn on" id="tE" data-view="edit"></button><button class="btn" id="tP" data-view="prev"></button></nav>
 <div id="toast"></div><div id="printarea"></div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <script>(function(global2, factory) {
   typeof exports === "object" && typeof module !== "undefined" ? factory(exports) : typeof define === "function" && define.amd ? define(["exports"], factory) : (global2 = typeof globalThis !== "undefined" ? globalThis : global2 || self, factory(global2.docx = {}));
 })(this, (function(exports2) {
@@ -23251,23 +23249,6 @@ const yr=e=>{const p=String(e.period||'').replace(/[٠-٩]/g,c=>'٠١٢٣٤٥٦�
 a=[...a].sort((x,y)=>{const p=yr(x),q=yr(y);return p[0]-q[0]||p[1]-q[1]});return m=='new'?a.reverse():a}
 function yearsExp(){const cy=new Date().getFullYear(),iv=[];vis('exp').forEach(e=>{const p=String(e.period||'').replace(/[٠-٩]/g,c=>'٠١٢٣٤٥٦٧٨٩'.indexOf(c)),ys=(p.match(/(19|20)\d{2}/g)||[]).map(Number);if(!ys.length)return;const now=/now|present|current|حتى الآن|الآن|حالي|اليوم|مستمر/i.test(p),a=Math.min(...ys);iv.push([a,Math.max(now?cy:Math.max(...ys),a)])});
 iv.sort((a,b)=>a[0]-b[0]);let tot=0,cs=null,ce=null;iv.forEach(([a,b])=>{if(cs===null){cs=a;ce=b}else if(a<=ce)ce=Math.max(ce,b);else{tot+=ce-cs;cs=a;ce=b}});if(cs!==null)tot+=ce-cs;return tot||(iv.length?1:0)}
-async function pdfPages(f){if(typeof pdfjsLib==='undefined')throw{code:'nopdf'};pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';const doc=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;let t='';const imgs=[];
-for(let i=1;i<=doc.numPages;i++){const pg=await doc.getPage(i),c=await pg.getTextContent();t+=c.items.map(x=>x.str+(x.hasEOL?'\n':' ')).join('')+'\n';
-if(i<=3){const vp=pg.getViewport({scale:1.6}),cv=document.createElement('canvas');cv.width=vp.width;cv.height=vp.height;await pg.render({canvasContext:cv.getContext('2d'),viewport:vp}).promise;imgs.push(cv.toDataURL('image/jpeg',.8).split(',')[1])}}
-return {t,imgs}}
-async function fileText(f){const n=f.name.toLowerCase();
-if(n.endsWith('.pdf'))return pdfPages(f);
-if(n.endsWith('.docx')){if(typeof mammoth==='undefined')throw{code:'nodoc'};return {t:(await mammoth.extractRawText({arrayBuffer:await f.arrayBuffer()})).value,imgs:[]}}
-if(/\.(png|jpe?g|webp)$/.test(n)){const im=await new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=URL.createObjectURL(f)});const c=document.createElement('canvas'),m=Math.min(1,1600/Math.max(im.width,im.height));c.width=im.width*m;c.height=im.height*m;c.getContext('2d').drawImage(im,0,0,c.width,c.height);return {t:'',imgs:[c.toDataURL('image/jpeg',.85).split(',')[1]]}}
-return {t:await f.text(),imgs:[]}}
-async function importCV(f){toast(t().wait,90000);const fr=await fileText(f),tx=fr.t.replace(/[ \t]+\n/g,'\n').slice(0,9000),vision=fr.imgs.length>0&&['claude','openai'].includes(G.ai.prov);
-if(!vision&&tx.trim().length<30)throw{code:'noext'};
-let r;try{r=await AI(`Extract resume data into JSON only, with this exact shape: {"name":"","title":"","email":"","phone":"","city":"","summary":"","skills":"comma separated","langs":"comma separated","li":"","gh":"","web":"","exp":[{"role":"","org":"","period":"","desc":""}],"edu":[{"deg":"","school":"","period":""}],"proj":[{"name":"","link":"","desc":""}],"crs":[{"name":"","org":"","year":"","cid":"","url":""}],"ref":[{"name":"","org":"","phone":"","email":""}]}. ${vision?'The resume pages are attached as images: read them visually, they are the primary source. The extracted text below is only a hint and may be garbled.':'The text was extracted from a file and may have garbled or reversed Arabic word order or spacing: repair it.'} Do not invent facts; use empty strings when missing. Keep the original language. Put job tasks in desc as separate lines. For certificates/courses put the course name in name, issuer in org and year in year.\n\n${tx}`,true,'default',vision?fr.imgs:null)}catch(e){if(!localImport(tx))throw e;return}
-S.bak=JSON.stringify({d:S.d,lang:S.lang});const d=S.d;['name','title','email','phone','city','summary','skills','langs','li','gh','web'].forEach(k=>{if(typeof r[k]=='string'&&r[k].trim())d[k]=r[k].trim()});
-['exp','edu','proj','crs','ref'].forEach(k=>{if(Array.isArray(r[k])&&r[k].length)d[k]=r[k].map(o=>Object.assign({},BL[k],o))});
-const h=(tx||JSON.stringify(r)).slice(0,600),ar=(h.match(/[\u0600-\u06FF]/g)||[]).length,la=(h.match(/[A-Za-z]/g)||[]).length;S.lang=ar>la?'ar':'en';form();toast(t().done)}
-function localImport(tx){const d=S.d,m=re=>{const x=tx.match(re);return x?x[0]:''};const em=m(/[\w.+-]+@[\w-]+\.[\w.-]+/),ph=m(/\+?\d[\d\s().-]{8,}\d/),li=m(/(https?:\/\/)?(www\.)?linkedin\.com\/[^\s]+/i),gh=m(/(https?:\/\/)?(www\.)?github\.com\/[^\s]+/i);
-if(!em&&!ph&&!li&&!gh)return false;S.bak=JSON.stringify({d:S.d,lang:S.lang});if(em)d.email=em;if(ph)d.phone=ph.trim();if(li)d.li=li;if(gh)d.gh=gh;form();toast(t().e8,6000);return true}
 function body(k){const d=DD(),lst=s=>s.split(/[,،]/).map(x=>x.trim()).filter(Boolean),f=S.tpl;
 if(k=='summary')return d.summary?`<p>${esc(d.summary)}</p>`:'';
 if(k=='exp')return vis('exp').filter(e=>e.role||e.org||e.desc).map(e=>`<div class="it"><b>${esc(e.role)}</b>${e.org?`<span class="org">${esc(e.org)}</span>`:''}<small>${esc(e.period)}</small><p>${esc(e.desc)}</p></div>`).join('');
@@ -23321,7 +23302,7 @@ if(!json)return tx;try{return pj(tx)}catch(e){const tx2=await ext(p+'\n\nIMPORTA
 function setPanel(){const L=t(),a=G.ai;return `<div class="panel"><h2>⚙️ ${L.aiset}</h2><label>${L.prov}</label><select data-as="prov">${[['auto',L.pa],['free',L.pf],['claude','Claude (API key)'],['openai','OpenAI / ChatGPT (API key)']].map(p=>`<option value="${p[0]}" ${a.prov==p[0]?'selected':''}>${p[1]}</option>`).join('')}</select>
 <label>Claude API key</label><input type="password" data-as="ckey" value="${esc(a.ckey)}" placeholder="sk-ant-..."><label>${L.model} Claude</label><input type="text" data-as="cmodel" value="${esc(a.cmodel)}">
 <label>OpenAI API key</label><input type="password" data-as="okey" value="${esc(a.okey)}" placeholder="sk-..."><label>${L.model} OpenAI</label><input type="text" data-as="omodel" value="${esc(a.omodel)}">
-<div class="tip">${L.aitip}</div><button class="btn ai" data-act="aitest">${L.aitest}</button><details style="margin-top:8px"><summary style="cursor:pointer">${L.keyq}</summary><div class="tip">${L.keya}</div></details><h2 style="margin-top:16px">${L.imp}</h2><input type="file" id="impf" accept=".pdf,.docx,.txt,image/*"><div class="tip">${L.imptip}</div><span hidden></span><button class="btn ai" hidden data-act="aitest">${L.aitest}</button></div>`}
+<div class="tip">${L.aitip}</div><button class="btn ai" data-act="aitest">${L.aitest}</button><details style="margin-top:8px"><summary style="cursor:pointer">${L.keyq}</summary><div class="tip">${L.keya}</div></details></div>`}
 async function run(b,fn){const o=b.textContent;b.disabled=true;b.textContent=t().wait;try{await fn()}catch(er){toast(errMsg(er),4500)}finally{b.disabled=false;b.textContent=o}}
 function cvText(){const d=S.d;return [d.name,d.title,d.summary,'Skills: '+d.skills,'Languages: '+d.langs,...vis('exp').map(e=>`${e.role} at ${e.org} (${e.period}): ${e.desc}`),...vis('edu').map(e=>`${e.deg}, ${e.school} ${e.period}`),...vis('proj').map(e=>`Project ${e.name}: ${e.desc}`),...vis('crs').map(e=>`Course ${e.name} ${e.org} ${e.year}`)].join('\n')}
 const lng=()=>S.lang=='ar'?'Arabic':'English';
@@ -23352,7 +23333,7 @@ else if(x.dataset.as){G.ai[x.dataset.as]=x.value;save()}else if(x.dataset.rn){S.
 document.addEventListener('change',e=>{const x=e.target;if(x.id=='fnt'){S.font=x.value;preview()}
 if(x.id=='rsel'){G.items[G.cur]=S;G.cur=x.value;S=G.items[G.cur];M={missing:[],summary:''};save();form()}
 if(x.dataset.hd){S.hide[x.dataset.hd]=!x.checked;preview()}
-if(x.id=='impf'&&x.files[0]){const f=x.files[0];x.value='';run({},()=>importCV(f))}
+
 if(x.dataset.cfg){S.cfg=S.cfg||{};S.cfg[x.dataset.cfg]=x.checked;preview()}
 if(x.dataset.vis){const[k,i]=x.dataset.vis.split(':');S.d[k][+i].hide=!x.checked;form()}
 if(x.dataset.sort){S.sort=S.sort||{};S.sort[x.dataset.sort]=x.value;preview()}
