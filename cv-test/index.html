@@ -23325,17 +23325,59 @@ async function fileText(f){
 }
 async function importCV(f){
  toast(S.lang==='ar'?'جارٍ قراءة الملف...':'Reading file...',90000);
- const fr=await fileText(f),tx=cleanImportText(fr.t).slice(0,18000);
+ const fr=await fileText(f),tx=cleanImportText(fr.t).slice(0,24000);
  if(tx.trim().length<30)throw{code:'noext'};
+ const prompt=`You are an expert resume/CV data extraction system. Read the ENTIRE resume text below and extract every factual detail into ONE valid JSON object. The text may be Arabic, English, or mixed. Arabic is written right-to-left: preserve its natural word order and do not reverse lines.
+
+Return exactly this schema and every key must be present:
+{"name":"","title":"","email":"","phone":"","city":"","summary":"","skills":"","langs":"","li":"","gh":"","web":"","exp":[{"role":"","org":"","period":"","desc":""}],"edu":[{"deg":"","school":"","period":""}],"proj":[{"name":"","link":"","desc":""}],"crs":[{"name":"","org":"","year":"","cid":"","url":""}],"ref":[{"name":"","org":"","phone":"","email":""}]}
+
+Extraction rules:
+- Extract the candidate's full name, job title/profession, phone, email, city and profile links wherever they appear.
+- Extract EVERY work experience as a separate exp item. Put position in role, employer in org, dates exactly as written in period, and duties/responsibilities in desc.
+- Extract EVERY education entry as a separate edu item. Put qualification/degree in deg, school/university in school, and dates in period.
+- Extract skills and languages as comma-separated strings.
+- Extract every certificate/course as a separate crs item; course name in name, provider in org, year/date in year.
+- Include projects and references when present.
+- Do not put the email alone and stop. Continue through the complete document and all sections.
+- Do not invent or infer missing facts. Use empty strings or empty arrays for information not present.
+- Preserve names, numbers, dates and URLs accurately. Return JSON only, with no markdown or explanation.
+
+RESUME TEXT:
+${tx}`;
  let r;
  try{
-  r=await AI(`Extract resume data into JSON only, with this exact shape: {"name":"","title":"","email":"","phone":"","city":"","summary":"","skills":"comma separated","langs":"comma separated","li":"","gh":"","web":"","exp":[{"role":"","org":"","period":"","desc":""}],"edu":[{"deg":"","school":"","period":""}],"proj":[{"name":"","link":"","desc":""}],"crs":[{"name":"","org":"","year":"","cid":"","url":""}],"ref":[{"name":"","org":"","phone":"","email":""}]}. The source may contain Arabic and English OCR text. Read Arabic naturally from right to left; do not reverse words or whole lines. Repair only obvious OCR spacing errors. Preserve names, phone numbers, email addresses, URLs, job titles and especially dates exactly as written. Do not invent facts; use empty strings when missing. Keep the original language. Put job tasks in desc as separate lines. For certificates/courses put the course name in name, issuer in org and year in year. Return only valid JSON.\n\nRESUME TEXT:\n${tx}`,true,'default');
- }catch(e){if(!localImport(tx))throw e;return}
+  r=await AI(prompt,true,'default');
+ }catch(e){
+  throw e;
+ }
+ const hasText=v=>typeof v==='string'&&v.trim().length>0;
+ const countData=o=>{
+  let n=0;
+  ['name','title','email','phone','city','summary','skills','langs','li','gh','web'].forEach(k=>{if(hasText(o&&o[k]))n++});
+  ['exp','edu','proj','crs','ref'].forEach(k=>{if(Array.isArray(o&&o[k]))n+=o[k].filter(x=>x&&Object.values(x).some(hasText)).length});
+  return n;
+ };
  if(!r||typeof r!=='object')throw{code:'badjson'};
+ if(countData(r)<=1){
+  const retry=`Re-examine the full resume carefully. Your previous extraction missed most of the content. Extract the candidate name, phone, profession, employment history, education, skills and certificates from the text. Pay special attention to Arabic section headings and Arabic dates. Return a complete JSON object using exactly this schema:
+{"name":"","title":"","email":"","phone":"","city":"","summary":"","skills":"","langs":"","li":"","gh":"","web":"","exp":[{"role":"","org":"","period":"","desc":""}],"edu":[{"deg":"","school":"","period":""}],"proj":[{"name":"","link":"","desc":""}],"crs":[{"name":"","org":"","year":"","cid":"","url":""}],"ref":[{"name":"","org":"","phone":"","email":""}]}
+Do not stop after finding an email. If a section is present, fill it. Do not invent facts. JSON only.
+
+FULL RESUME TEXT:
+${tx}`;
+  r=await AI(retry,true,'default');
+ }
+ if(!r||typeof r!=='object'||countData(r)<=1)throw{code:'noresume'};
  S.bak=JSON.stringify({d:S.d,lang:S.lang});const d=S.d;
- ['name','title','email','phone','city','summary','skills','langs','li','gh','web'].forEach(k=>{if(typeof r[k]=='string'&&r[k].trim())d[k]=r[k].trim()});
- ['exp','edu','proj','crs','ref'].forEach(k=>{if(Array.isArray(r[k])&&r[k].length)d[k]=r[k].map(o=>Object.assign({},BL[k],o))});
- const h=(tx||JSON.stringify(r)).slice(0,600),ar=(h.match(/[\u0600-\u06FF]/g)||[]).length,la=(h.match(/[A-Za-z]/g)||[]).length;
+ ['name','title','email','phone','city','summary','skills','langs','li','gh','web'].forEach(k=>{if(hasText(r[k]))d[k]=String(r[k]).trim()});
+ ['exp','edu','proj','crs','ref'].forEach(k=>{
+  if(Array.isArray(r[k])){
+   const rows=r[k].filter(o=>o&&typeof o==='object'&&Object.values(o).some(hasText));
+   if(rows.length)d[k]=rows.map(o=>Object.assign({},BL[k],o));
+  }
+ });
+ const h=tx.slice(0,1200),ar=(h.match(/[\\u0600-\\u06FF]/g)||[]).length,la=(h.match(/[A-Za-z]/g)||[]).length;
  S.lang=ar>la?'ar':'en';form();toast(t().done);
 }
 function localImport(tx){const d=S.d,m=re=>{const x=tx.match(re);return x?x[0]:''};const em=m(/[\w.+-]+@[\w-]+\.[\w.-]+/),ph=m(/\+?\d[\d\s().-]{8,}\d/),li=m(/(https?:\/\/)?(www\.)?linkedin\.com\/[^\s]+/i),gh=m(/(https?:\/\/)?(www\.)?github\.com\/[^\s]+/i);
@@ -23380,8 +23422,23 @@ ats();if($('#yrs'))$('#yrs').textContent=yearsExp();if($('#pg'))$('#pg').textCon
 addEventListener('resize',preview);
 function applyTheme(){const r=document.documentElement;if(G.theme=='system')r.removeAttribute('data-theme');else r.setAttribute('data-theme',G.theme);const b=$('#bTheme');b.textContent={light:'☀️',dark:'🌙',system:'🖥️'}[G.theme]}
 function goTo(i){if(i==7){S.tpl='ats';S.color=TPLC.ats;form();return}const q=['[data-k=email]','[data-k=phone]','[data-k=summary]','[data-k=skills]','[data-l=exp][data-f=desc]','[data-l=exp][data-f=desc]','[data-l=edu][data-f=deg]'][i],e=document.querySelector(q);if(e){e.scrollIntoView({block:'center',behavior:'smooth'});e.focus()}}
-function errMsg(er){const L=t(),c=er&&er.code;if(c=='nokey')return L.e4;if(c=='net')return L.e5;if(c=='ocrnet')return S.lang=='ar'?'تعذر تحميل محرك قراءة الصور. تحقق من اتصال الإنترنت ثم أعد المحاولة.':'Could not load the OCR engine. Check your internet connection and try again.';if(c=='ocrfail')return S.lang=='ar'?'تعذرت قراءة الصورة. جرّب صورة أوضح.':'Could not read the image. Try a clearer image.';if(c=='toomanypages')return S.lang=='ar'?'الملف يتجاوز 30 صفحة. قسّمه إلى ملفات أصغر ثم أعد المحاولة.':'The file exceeds 30 pages. Split it into smaller files and try again.';if(c=='noext')return L.e6;if(c=='badjson')return L.e7+(er.raw?' ['+String(er.raw).replace(/\s+/g,' ').slice(0,70)+']':'');return c=='not_granted'?L.e1:(c=='unavailable'||c=='no_runtime')?L.e2:c=='rate_limited'?L.e3:c=='empty'?L.fill:L.err+' ('+(c||'?')+')'}
-function pj(x){const raw=String(x);x=raw.replace(/```json|```/g,'');const i=x.indexOf('{'),j=x.lastIndexOf('}');if(i<0||j<i)throw{code:'badjson',raw};try{return JSON.parse(x.slice(i,j+1))}catch(e){throw{code:'badjson',raw}}}
+function errMsg(er){const L=t(),c=er&&er.code;if(c=='nokey')return L.e4;if(c=='net')return L.e5;if(c=='ocrnet')return S.lang=='ar'?'تعذر تحميل محرك قراءة الصور. تحقق من اتصال الإنترنت ثم أعد المحاولة.':'Could not load the OCR engine. Check your internet connection and try again.';if(c=='ocrfail')return S.lang=='ar'?'تعذرت قراءة الصورة. جرّب صورة أوضح.':'Could not read the image. Try a clearer image.';if(c=='toomanypages')return S.lang=='ar'?'الملف يتجاوز 30 صفحة. قسّمه إلى ملفات أصغر ثم أعد المحاولة.':'The file exceeds 30 pages. Split it into smaller files and try again.';if(c=='noext')return L.e6;if(c=='noresume')return S.lang=='ar'?'تمت قراءة الملف، لكن تعذر استخراج بيانات السيرة. جرّب ملفاً أوضح أو أعد المحاولة.':'The file was read, but resume details could not be extracted. Try a clearer file or retry.';if(c=='badjson')return L.e7+(er.raw?' ['+String(er.raw).replace(/\s+/g,' ').slice(0,70)+']':'');return c=='not_granted'?L.e1:(c=='unavailable'||c=='no_runtime')?L.e2:c=='rate_limited'?L.e3:c=='empty'?L.fill:L.err+' ('+(c||'?')+')'}
+function pj(x){
+ const raw=String(x||'').trim();
+ const clean=raw.replace(/```(?:json)?/gi,'').trim();
+ const start=clean.indexOf('{');
+ if(start<0)throw{code:'badjson',raw};
+ let depth=0,inStr=false,escape=false,end=-1;
+ for(let i=start;i<clean.length;i++){
+  const c=clean[i];
+  if(inStr){if(escape)escape=false;else if(c==='\\\\')escape=true;else if(c==='"')inStr=false;continue}
+  if(c==='"'){inStr=true;continue}
+  if(c==='{')depth++;
+  else if(c==='}'&&--depth===0){end=i;break}
+ }
+ if(end<0)throw{code:'badjson',raw};
+ try{return JSON.parse(clean.slice(start,end+1))}catch(e){throw{code:'badjson',raw}}
+}
 async function ext(p,prov,imgs){const a=G.ai;let r,tx;
 if(prov=='claude'){if(!a.ckey)throw{code:'nokey'};r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'content-type':'application/json','x-api-key':a.ckey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:a.cmodel,max_tokens:4000,messages:[{role:'user',content:imgs&&imgs.length?[...imgs.map(d=>({type:'image',source:{type:'base64',media_type:'image/jpeg',data:d}})),{type:'text',text:p}]:p}]})});if(!r.ok)throw{code:'http'+r.status};const j=await r.json();tx=(j.content||[]).map(c=>c.text||'').join('')}
 else{const o=prov=='openai';if(o&&!a.okey)throw{code:'nokey'};r=await fetch(o?'https://api.openai.com/v1/chat/completions':'https://text.pollinations.ai/openai',{method:'POST',headers:Object.assign({'content-type':'application/json'},o?{authorization:'Bearer '+a.okey}:{}),body:JSON.stringify({model:o?a.omodel:'openai',messages:[{role:'user',content:imgs&&imgs.length&&o?[...imgs.map(d=>({type:'image_url',image_url:{url:'data:image/jpeg;base64,'+d}})),{type:'text',text:p}]:p}]})});if(!r.ok)throw{code:'http'+r.status};const j=await r.json();tx=j.choices[0].message.content}
