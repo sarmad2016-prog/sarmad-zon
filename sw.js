@@ -1,4 +1,4 @@
-const CACHE_NAME = "sarmad-zone-v3";
+const CACHE_NAME = "sarmad-zone-v4";
 const APP_SCOPE = new URL(self.registration.scope);
 const APP_FILES = [
   "./library/",
@@ -8,7 +8,9 @@ const APP_FILES = [
   "./cv/manifest.webmanifest",
   "./games/manifest.webmanifest",
   "./install-prompt.js",
-  "./icon.svg"
+  "./zone-icon.svg",
+  "./cv/cv-icon.svg",
+  "./games/games-icon.svg"
 ].map(path => new URL(path, APP_SCOPE).href);
 
 self.addEventListener("install", event => {
