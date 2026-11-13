@@ -1,73 +1,108 @@
 (() => {
   'use strict';
+
   const path = location.pathname;
   const config = path.includes('/cv/')
-    ? { key: 'sarmad-cv-installed', label: 'تثبيت CV', title: 'منشئ السيرة الذاتية' }
+    ? { label: 'تثبيت منشئ السيرة', title: 'منشئ السيرة الذاتية' }
     : path.includes('/games/')
-      ? { key: 'sarmad-games-installed', label: 'تثبيت الألعاب', title: 'ساحة الألعاب' }
-      : { key: 'sarmad-zone-installed', label: 'تثبيت S.Z', title: 'Sarmad Zone' };
+      ? { label: 'تثبيت الألعاب', title: 'ساحة الألعاب' }
+      : path.includes('/s.scaner/')
+        ? { label: 'تثبيت السكنر', title: 'السكنر' }
+        : { label: 'تثبيت المكتبة', title: 'مكتبتي الرقمية' };
+
   const isStandalone = () =>
     (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
     navigator.standalone === true;
-  const hideAsInstalled = () => {
-    try { localStorage.setItem(config.key, '1'); } catch (_) {}
-    const button = document.getElementById('szInstallBtn');
-    if (button) button.hidden = true;
-  };
-  try {
-    if (localStorage.getItem(config.key) === '1') return;
-    if (isStandalone()) { hideAsInstalled(); return; }
-  } catch (_) {}
-  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(() => {}));
-  }
+
+  if (isStandalone()) return;
+
   let installEvent = null;
+  let installed = false;
+
   const style = document.createElement('style');
   style.textContent = `
-    #szInstallBtn{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:30px;padding:5px 10px;border:1px solid #b8d4c3;border-radius:9px;background:#edf7f0;color:#145235;font:700 12px/1.2 Tahoma,Arial,sans-serif;cursor:pointer;white-space:nowrap;box-shadow:0 2px 7px #102d1b12}
-    #szInstallBtn[hidden]{display:none!important}
-    #szInstallBtn:active{transform:scale(.97)}
-    body.sz-library > header{position:relative}
-    body.sz-library > header #szInstallBtn{position:absolute;top:10px;right:12px}
-    @media(max-width:520px){#szInstallBtn{min-height:27px;padding:4px 8px;font-size:11px;border-radius:8px}}
+    #szInstallBtn {
+      position: fixed;
+      top: calc(env(safe-area-inset-top, 0px) + 12px);
+      left: 12px;
+      z-index: 2147483647;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 42px;
+      padding: 8px 13px;
+      border: 1px solid #b8d4c3;
+      border-radius: 12px;
+      background: #0d3f29;
+      color: #fff;
+      font: 800 13px/1.2 Tahoma, Arial, sans-serif;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 3px 12px #102d1b30;
+    }
+    #szInstallBtn:active { transform: scale(.97); }
+    #szInstallBtn:focus-visible { outline: 3px solid #75b997; outline-offset: 3px; }
+    @media(max-width:520px) {
+      #szInstallBtn { min-height: 38px; padding: 7px 10px; font-size: 12px; }
+    }
   `;
   document.head.appendChild(style);
+
   const button = document.createElement('button');
   button.id = 'szInstallBtn';
   button.type = 'button';
   button.textContent = '＋ ' + config.label;
-  button.setAttribute('aria-label', 'تثبيت ' + config.title);
-  const mount = () => {
-    const header = document.querySelector('body > header') || document.querySelector('header.top');
-    if (!header) return;
-    if (!path.includes('/cv/') && !path.includes('/games/')) document.body.classList.add('sz-library');
-    if (path.includes('/games/')) {
-      const tools = header.querySelector('.tools');
-      if (tools) tools.insertBefore(button, tools.firstChild); else header.appendChild(button);
-    } else if (path.includes('/cv/')) {
-      header.insertBefore(button, header.firstChild);
-    } else {
-      header.insertBefore(button, header.firstChild);
+  button.setAttribute('aria-label', config.label);
+  button.title = 'إضافة ' + config.title + ' إلى الشاشة الرئيسية';
+  (document.body || document.documentElement).appendChild(button);
+
+  const scanner = path.includes('/s.scaner/');
+  const swUrl = scanner ? './sw.js' : '../sw.js';
+  const swScope = scanner ? './' : '../';
+  const registerWorker = () => {
+    if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+      navigator.serviceWorker.register(swUrl, { scope: swScope }).catch(() => {});
     }
   };
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', () => { mount(); button.hidden = false; }, {once:true}); else { mount(); button.hidden = false; }
-  window.addEventListener('beforeinstallprompt', event => { event.preventDefault(); installEvent = event; });
-  window.addEventListener('appinstalled', hideAsInstalled);
+  if (document.readyState === 'complete') registerWorker();
+  else window.addEventListener('load', registerWorker, { once: true });
+
+  window.addEventListener('beforeinstallprompt', event => {
+    event.preventDefault();
+    installEvent = event;
+    button.textContent = '＋ ' + config.label;
+    button.title = 'اضغط هنا لبدء التثبيت';
+  });
+
+  const hideAfterInstall = () => {
+    installed = true;
+    button.hidden = true;
+  };
+  window.addEventListener('appinstalled', hideAfterInstall);
+
   button.addEventListener('click', async () => {
-    if (isStandalone()) { hideAsInstalled(); return; }
-    if (installEvent) {
-      const event = installEvent;
-      installEvent = null;
-      try {
-        await event.prompt();
-        const choice = await event.userChoice;
-        if (choice && choice.outcome === 'accepted') hideAsInstalled();
-      } catch (_) {}
+    if (installed || isStandalone()) {
+      button.hidden = true;
       return;
     }
+
+    if (installEvent) {
+      const promptEvent = installEvent;
+      installEvent = null;
+      try {
+        await promptEvent.prompt();
+        const choice = await promptEvent.userChoice;
+        if (choice && choice.outcome === 'accepted') hideAfterInstall();
+      } catch (_) {
+        window.alert('تعذر فتح نافذة التثبيت. جرّب تحديث الصفحة ثم اضغط الزر مرة ثانية.');
+      }
+      return;
+    }
+
     const help = /iphone|ipad|ipod/i.test(navigator.userAgent)
       ? 'لتثبيت التطبيق على الآيفون: افتح الصفحة في Safari، اضغط مشاركة، ثم «إضافة إلى الشاشة الرئيسية».'
-      : 'افتح قائمة المتصفح (⋮) واختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية». إذا لم يظهر الخيار، افتح الصفحة في Chrome.';
+      : 'التثبيت المباشر غير متاح حالياً من المتصفح. افتح قائمة Chrome (⋮) واختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية». إذا لم يظهر الخيار، حدّث الصفحة وتأكد من فتح الرابط عبر HTTPS.';
     window.alert(help);
   });
 })();
