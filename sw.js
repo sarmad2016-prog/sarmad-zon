@@ -1,4 +1,4 @@
-const CACHE_NAME = "sarmad-zone-v4";
+const CACHE_NAME = "sarmad-zone-v5";
 const APP_SCOPE = new URL(self.registration.scope);
 const APP_FILES = [
   "./library/",
