@@ -2556,34 +2556,7 @@ loadRecentFiles();
 
 
 
-<script>
-(() => {
-  const installButton = document.createElement('button');
-  installButton.type = 'button';
-  installButton.id = 'scannerInstallButton';
-  installButton.textContent = '＋ تثبيت السكنر';
-  installButton.style.cssText = 'position:fixed;z-index:9999;top:10px;left:10px;border:1px solid #cfdcd8;border-radius:12px;padding:9px 13px;background:#dcebe4;color:#0d3f29;font:700 13px Tajawal,Tahoma,sans-serif;box-shadow:0 3px 12px #12352a22;cursor:pointer';
-  document.body.appendChild(installButton);
-  let installPrompt = null;
-  const standalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-  const hide = () => { installButton.hidden = true; };
-  if (standalone()) hide();
-  window.addEventListener('beforeinstallprompt', event => { event.preventDefault(); installPrompt = event; });
-  window.addEventListener('appinstalled', hide);
-  installButton.addEventListener('click', async () => {
-    if (standalone()) return hide();
-    if (installPrompt) {
-      const promptEvent = installPrompt; installPrompt = null;
-      await promptEvent.prompt();
-      const choice = await promptEvent.userChoice;
-      if (choice && choice.outcome === 'accepted') hide();
-    } else alert('افتح قائمة المتصفح (⋮) واختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».');
-  });
-  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
-    window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
-  }
-})();
-</script>
+<script src="../install-prompt.js"></script>
 
 </body>
 </html>
