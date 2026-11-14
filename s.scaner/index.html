@@ -152,8 +152,13 @@ main{max-width:720px;margin:0 auto;padding:10px 12px}
 .tswatch{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);cursor:pointer;flex:0 0 auto;padding:0}
 .tswatch:active{transform:scale(.88)}
 
-.toast{position:fixed;top:calc(64px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%) translateY(-24px) scale(.95);background:var(--card2);border:1.5px solid var(--line);border-inline-start:5px solid var(--acc);padding:13px 20px;border-radius:14px;font-size:14px;font-weight:700;line-height:1.5;opacity:0;transition:opacity .25s,transform .3s cubic-bezier(.2,.9,.25,1.25);z-index:90;pointer-events:none;max-width:92vw;text-align:center;box-shadow:0 12px 32px rgba(0,0,0,.4)}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0) scale(1)}
+.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translate(-50%,18px) scale(.97);display:flex;align-items:center;gap:9px;width:max-content;max-width:min(90vw,420px);padding:10px 14px;border:1px solid rgba(255,255,255,.12);border-radius:13px;background:rgba(20,31,27,.94);color:#fff;font-size:13px;font-weight:600;line-height:1.45;text-align:right;box-shadow:0 8px 28px rgba(0,0,0,.22);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);opacity:0;visibility:hidden;transition:opacity .2s ease,transform .24s cubic-bezier(.2,.8,.2,1),visibility .2s;z-index:999;pointer-events:none}
+.toast.show{opacity:1;visibility:visible;transform:translate(-50%,0) scale(1)}
+.toast .toast-icon{width:21px;height:21px;flex:0 0 21px;display:grid;place-items:center;border-radius:50%;font-size:13px;font-weight:800;background:rgba(255,255,255,.13);color:#fff}
+.toast.success .toast-icon{background:#d8f7e5;color:#176b3a}
+.toast.error .toast-icon{background:#ffe1e1;color:#a52828}
+.toast.info .toast-icon{background:#dceefa;color:#185b83}
+.toast .toast-message{min-width:0;overflow-wrap:anywhere}
 h3.sec{font-size:13.5px;margin:9px 0 5px;display:flex;align-items:center;gap:5px}
 h3.sec .selToggle{margin-inline-start:auto;width:24px;height:24px;border-radius:8px;background:var(--card2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--sub);cursor:pointer;padding:0}
 h3.sec .selToggle .ic{width:13px;height:13px}
@@ -676,7 +681,7 @@ document.querySelectorAll('.tswatch').forEach(b=>{
   const c1=b.dataset.c1,c2=b.dataset.c2;
   setAccentVars(c1,c2);
   try{localStorage.setItem(THEME_KEY,JSON.stringify([c1,c2]));}catch(e){}
-  toast('تم تطبيق الثيم ✓');
+  toast('تم التطبيق');
  };
 });
 $('themeImgBtn').onclick=()=>$('themeImgPick').click();
@@ -687,14 +692,14 @@ $('themeImgPick').onchange=async e=>{
   const[c1,c2]=await extractThemeFromImage(f);
   setAccentVars(c1,c2);
   try{localStorage.setItem(THEME_KEY,JSON.stringify([c1,c2]));}catch(e2){}
-  toast('تم تطبيق هوية الألوان الجديدة ✓');
+  toast('تم التطبيق');
  }catch(e2){toast('تعذّر استخراج الألوان من هذه الصورة');}
 };
 $('themeReset').onclick=()=>{
  const r=document.documentElement.style;
   ['--acc','--acc2','--accText','--grad','--gradAI','--aiText','--glow'].forEach(v=>r.removeProperty(v));
  try{localStorage.removeItem(THEME_KEY);}catch(e){}
- toast('تمت استعادة الألوان الافتراضية ✓');
+ toast('تمت الاستعادة');
 };
 (function(){try{const v=localStorage.getItem(THEME_KEY);if(v){const[c1,c2]=JSON.parse(v);setAccentVars(c1,c2);}}catch(e){}})();
 
@@ -766,7 +771,7 @@ $('aiMode').onchange=()=>{
 };
 $('aiSave').onclick=()=>{
  saveCfg({mode:$('aiMode').value,url:$('aiUrl').value.trim(),key:$('aiKey').value.trim(),model:$('aiModel').value.trim()||'gpt-image-1'});
- $('settings').classList.add('hidden');toast('تم حفظ إعدادات الذكاء الاصطناعي ✓');
+ $('settings').classList.add('hidden');toast('تم الحفظ');
 };
 
 /* ===== نافذة اسم الملف ===== */
@@ -803,7 +808,19 @@ function askYesNoCancel(msg,title,icon){
 }
 
 function show(v){document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));$(v).classList.add('active');document.body.classList.toggle('launcher-mode',v==='launcher');scrollTo(0,0);}
-function toast(m,ms){if(ms===undefined)ms=3200;const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._h);if(ms)t._h=setTimeout(()=>t.classList.remove('show'),ms);}
+function toast(m,ms){
+ const t=$('toast');
+ const message=String(m??'').replace(/[✓✔️]/g,'').trim();
+ const type=/تعذّر|تعذر|خطأ|غير صالح|لا يوجد اتصال|لم تُلتقط|لم يتم/i.test(message)?'error':/تم|اكتمل|انتهى|حُذفت|أُضيفت|تمت/i.test(message)?'success':'info';
+ const icon=type==='success'?'✓':type==='error'?'!':'i';
+ t.className='toast '+type;
+ t.innerHTML='<span class="toast-icon" aria-hidden="true">'+icon+'</span><span class="toast-message"></span>';
+ t.querySelector('.toast-message').textContent=message;
+ requestAnimationFrame(()=>t.classList.add('show'));
+ clearTimeout(t._h);
+ if(ms===undefined)ms=type==='error'?3800:2500;
+ if(ms)t._h=setTimeout(()=>t.classList.remove('show'),ms);
+}
 let recentFiles=[],recentLibraryEntries=[],recentFolders=[],recentFolderMap={},recentHiddenIds=[],recentQueue=Promise.resolve(),recentSelectionMode=false,recentSelectedKeys=new Set(),recentShareQueue=[],recentShareIndex=0,recentShareFile=null;
 function recentEntryKey(f){return String(f?.id??'')}
 function allRecentItems(){return [...recentFiles,...recentLibraryEntries]}
@@ -932,14 +949,14 @@ async function prepareRecentShareCurrent(){
   try{recentShareFile=await buildRecentShareFile(item);break}
   catch(e){console.error(e);toast('تعذّر تجهيز «'+item.name+'» للإرسال');recentShareIndex++}
  }
- if(recentShareIndex>=recentShareQueue.length){closeRecentShare();toast('انتهى تجهيز الملفات المحددة');return}
+ if(recentShareIndex>=recentShareQueue.length){closeRecentShare();toast('اكتمل التجهيز');return}
  $('recentShareName').textContent=recentShareFile.name;$('recentShareSend').disabled=false;$('recentShareDownload').disabled=false;
 }
 async function startRecentShare(){
  const items=selectedRecentItems();if(!items.length){toast('حدد مستندات أو مجموعات أولاً');return}
  recentShareQueue=items;recentShareIndex=0;$('recentShareModal').classList.remove('hidden');await prepareRecentShareCurrent();
 }
-async function advanceRecentShare(){recentShareIndex++;if(recentShareIndex>=recentShareQueue.length){closeRecentShare();toast('اكتمل إرسال الملفات المحددة');return}await prepareRecentShareCurrent()}
+async function advanceRecentShare(){recentShareIndex++;if(recentShareIndex>=recentShareQueue.length){closeRecentShare();toast('اكتمل الإرسال');return}await prepareRecentShareCurrent()}
 $('recentShareSelected').onclick=startRecentShare;
 $('recentShareClose').onclick=closeRecentShare;
 $('recentShareDownload').onclick=async()=>{if(!recentShareFile)return;const file=recentShareFile;download(file,file.name);await advanceRecentShare()};
@@ -1031,7 +1048,7 @@ $('viewerUsePage').onclick=async()=>{
     state.pages.push({id:Date.now()+Math.random(),url:c.toDataURL('image/jpeg',.93),w:c.width,h:c.height});c.width=c.height=0;added++;
    }
   }
-  if(added){closeViewer();show('home');renderPages();persistPages();toast('أُضيفت '+added+' صفحة إلى الماسح');}
+  if(added){closeViewer();show('home');renderPages();persistPages();toast('تمت الإضافة');}
  }catch(e){console.error(e);toast('تعذّرت إضافة صفحات الملف إلى الماسح');}
 };
 $('viewerDownload').onclick=async()=>{
@@ -1117,7 +1134,7 @@ $('pickCam').onchange=async e=>{
    );
    if(ans==='yes')nextCameraBatchPage();
    else if(ans==='no'){state.cameraBatch=false;reviewCameraBatch();}
-   else{state.cameraBatch=false;state.cameraBatchImages=[];show('home');toast('تم إلغاء التقاط الصفحات وحذفها');}
+   else{state.cameraBatch=false;state.cameraBatchImages=[];show('home');toast('تم الإلغاء');}
   }catch(err){toast('تعذّر تجهيز الصورة الملتقطة');}
   return;
  }
@@ -2084,7 +2101,7 @@ $('btnAI').onclick=async()=>{
   state.warpData=cw.getContext('2d').getImageData(0,0,cw.width,cw.height);
   state.warpW=cw.width;state.warpH=cw.height;
   filterId='orig';buildChips();applyFilter();
-  toast('تم التحسين بالذكاء الاصطناعي ✓');
+  toast('تم التحسين');
  }catch(e){toast('تعذر التحسين بالذكاء الاصطناعي — تحقق من ⚙️ والمفتاح والاتصال');}
  finally{btn.disabled=false;btn.textContent=old;}
 };
@@ -2123,7 +2140,7 @@ $('btnOCR').onclick=async()=>{
 };
 $('ocrClose').onclick=()=>$('ocrModal').classList.add('hidden');
 $('ocrCopy').onclick=async()=>{
- try{await navigator.clipboard.writeText($('ocrText').value);toast('تم نسخ النص ✓');}
+ try{await navigator.clipboard.writeText($('ocrText').value);toast('تم النسخ');}
  catch(e){$('ocrText').select();try{document.execCommand('copy');toast('تم نسخ النص ✓');}catch(e2){toast('تعذّر النسخ — حدده يدوياً');}}
 };
 $('ocrSave').onclick=()=>{
@@ -2164,9 +2181,9 @@ async function saveCurrentImageToGroup(wm){
   job.lastIndex=at;job.insertAt=at+1;job.didReplace=true;
  }
  await persistGroupSave(group);renderGroups();
- if(fileQueue.length){const next=fileQueue.shift();toast('تم حفظ الصورة بالمجموعة — جارٍ تجهيز الصورة التالية');loadFile(next);return}
+ if(fileQueue.length){const next=fileQueue.shift();toast('تم الحفظ');loadFile(next);return}
  state.groupImageEdit=null;await loadRecentFiles();openScannerGroup(group,job.lastIndex??0);
- toast(job.mode==='replace'?'تم استبدال الصورة وحفظ المجموعة':'تمت إضافة الصورة وحفظ المجموعة');
+ toast(job.mode==='replace'?'تم التحديث':'تمت الإضافة');
 }
 $('btnAdd').onclick=async()=>{
  const c=$('resCanvas');
@@ -2183,10 +2200,10 @@ $('btnAdd').onclick=async()=>{
   toast('تمت الإضافة ✓ — جارٍ فتح الصورة التالية ('+fileQueue.length+' متبقية)');
   loadFile(next);
   }else if(state.cameraBatch){
-   toast('تمت إضافة الصفحة — صوّر التالية أو أغلق الكاميرا للإنهاء');
+   toast('تمت الإضافة');
    nextCameraBatchPage();
  }else{
-  toast('تمت إضافة الصفحة مع توقيع الحقوق ✓');
+  toast('تم');
  }
 };
 function renderPages(){
@@ -2349,7 +2366,7 @@ $('btnPageSelDel').onclick=()=>{
  if(!confirm('حذف '+pageSel.size+' صفحة محددة؟'))return;
  state.pages=state.pages.filter(p=>!pageSel.has(p.id));
  pageSel.clear();renderPages();persistPages();
- toast('تم الحذف ✓');
+ toast('تم الحذف');
 };
 function openPreview(url){$('previewImg').src=url;$('previewModal').classList.remove('hidden');}
 $('previewClose').onclick=()=>$('previewModal').classList.add('hidden');
@@ -2362,7 +2379,7 @@ $('btnSaveGroup').onclick=()=>{
   state.groups.push(g);
   state.pages=[];
   renderPages();renderGroups();persistPages();persistGroupSave(g).then(loadRecentFiles);
-  toast('تم حفظ المجموعة «'+name+'» ✓ — يمكنك البدء بمجموعة جديدة الآن');
+  toast('تم الحفظ');
  },'disk');
 };
 function openScannerGroup(g,index=0){
@@ -2427,7 +2444,7 @@ $('btnBackup').onclick=async()=>{
    groups:state.groups.map(g=>({id:g.id,name:g.name,pages:g.pages}))};
   const blob=new Blob([JSON.stringify(payload)],{type:'application/json'});
   download(blob,'نسخة-احتياطية-سكنر-'+defaultFileName()+'.json');
-  toast('تم تصدير النسخة الاحتياطية ✓');
+  toast('تم التصدير');
  }catch(e){toast('تعذّر تجهيز النسخة الاحتياطية')}
 };
 $('btnRestore').onclick=()=>$('restoreFile').click();
@@ -2445,7 +2462,7 @@ $('restoreFile').onchange=e=>{
      state.groups.push(ng);groupWrites.push(persistGroupSave(ng));added++;
     });await Promise.all(groupWrites);
     renderGroups();loadRecentFiles();
-   toast('تم استيراد '+added+' مجموعة ✓');
+   toast('تم الاستيراد');
   }catch(e){toast('ملف النسخة الاحتياطية غير صالح');}
  };
  r.readAsText(f);
@@ -2520,7 +2537,7 @@ $('sendAsPdf').onclick=async()=>{
    try{await withTimeout(navigator.share({files:files,title:'مستندات ممسوحة'}),7000);return;}catch(e){if(e&&e.name==='AbortError')return;}
   }
   files.forEach(f=>download(f,f.name));
-  toast('تم تنزيل ملفات PDF ✓');
+  toast('تم التنزيل');
  }catch(e){toast('حدث خطأ أثناء إنشاء ملفات PDF');}
 };
 $('sendAsImg').onclick=async()=>{
@@ -2539,7 +2556,7 @@ $('sendAsImg').onclick=async()=>{
    try{await withTimeout(navigator.share({files:files,title:'مستندات ممسوحة'}),7000);return;}catch(e){if(e&&e.name==='AbortError')return;}
   }
   files.forEach(f=>download(f,f.name));
-  toast('تم تنزيل الصور ✓');
+  toast('تم التنزيل');
  }catch(e){toast('حدث خطأ أثناء تجهيز الصور');}
 };
 
