@@ -131,9 +131,9 @@ main{max-width:720px;margin:0 auto;padding:10px 12px}
 
 #cam{position:fixed;inset:0;background:#000;z-index:30;display:none;flex-direction:column}
 #cam.on{display:flex}
-#camStage{position:relative;flex:1;overflow:hidden}
+#camStage{position:relative;flex:1;min-height:0;overflow:hidden}
 #camVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-#camGuide{position:absolute;inset:7% 9%;border:2.5px dashed rgba(255,255,255,.85);border-radius:14px;box-shadow:0 0 0 2000px rgba(0,0,0,.4);pointer-events:none;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px}
+#camGuide{position:absolute;left:50%;top:50%;width:min(86vw,calc((100dvh - 170px)*.707));max-height:calc(100% - 28px);aspect-ratio:210/297;transform:translate(-50%,-50%);border:2.5px dashed rgba(255,255,255,.9);border-radius:8px;box-shadow:0 0 0 2000px rgba(0,0,0,.4);pointer-events:none;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px}
 #camGuide span{background:rgba(0,0,0,.6);color:#fff;font-size:11px;padding:5px 12px;border-radius:20px}
 #camClose{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));left:12px;z-index:3;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);border:1.5px solid rgba(255,255,255,.35);color:#ff8a8a;width:40px;height:40px;border-radius:50%;cursor:pointer}
 #camClose .ic{width:18px;height:18px}
@@ -549,7 +549,7 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='6.7';
+const APP_VERSION='6.8-test';
 
 /* ===== أيقونات SVG بدل الإيموجي =====
    بعض متصفحات الويب فيو المستخدمة في تطبيقات تغليف المواقع (مثل appsgeyser) لا تملك خط إيموجي كامل،
@@ -1399,10 +1399,23 @@ async function importWorkFiles(files,options={}){
 }
 let camOnCapture=null;
 async function openCam(onCapture){
- const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1920}}});
-  camOnCapture=typeof onCapture==='function'?onCapture:null;
-  $('camGuide').querySelector('span').textContent=state.cameraBatch?'التقط الصفحات بالتتابع، ثم اضغط × لمراجعتها':'ضع الورقة داخل الإطار';
-  state.camStream=stream;$('camVideo').srcObject=stream;$('cam').classList.add('on');
+ const videoConstraints={facingMode:{ideal:'environment'},width:{ideal:2560},height:{ideal:1920},aspectRatio:{ideal:0.75}};
+ const stream=await navigator.mediaDevices.getUserMedia({audio:false,video:videoConstraints});
+ const track=stream.getVideoTracks()[0];
+ if(track&&track.getCapabilities&&track.applyConstraints){
+  try{
+   const caps=track.getCapabilities();
+   if(Array.isArray(caps.focusMode)&&caps.focusMode.includes('continuous')){
+    await track.applyConstraints({advanced:[{focusMode:'continuous'}]});
+   }
+  }catch(e){console.debug('Continuous autofocus is not available on this device',e);}
+ }
+ camOnCapture=typeof onCapture==='function'?onCapture:null;
+ $('camGuide').querySelector('span').textContent=state.cameraBatch?'التقط الصفحات بالتتابع، ثم اضغط × لمراجعتها':'ضع الورقة داخل الإطار العمودي';
+ state.camStream=stream;
+ $('camVideo').srcObject=stream;
+ $('cam').classList.add('on');
+ try{await $('camVideo').play();}catch(e){}
 }
 function closeCam(){if(state.camStream){state.camStream.getTracks().forEach(t=>t.stop());state.camStream=null;}$('cam').classList.remove('on');camOnCapture=null;}
 $('camClose').onclick=()=>{const wasBatch=state.cameraBatch;state.cameraBatch=false;closeCam();if(wasBatch)reviewCameraBatch()};
