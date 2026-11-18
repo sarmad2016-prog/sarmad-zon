@@ -1,6 +1,6 @@
 {
   "id": "./",
-  "name": "سكنر - S.SCANER",
+  "name": "Sarmad Scanner",
   "short_name": "سكنر",
   "description": "تصوير المستندات والبطاقات وترتيبها وحفظها بصيغة PDF",
   "lang": "ar",
@@ -12,6 +12,11 @@
   "background_color": "#e3ecea",
   "theme_color": "#0d3f29",
   "icons": [
-    { "src": "../zone-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    {
+      "src": "../zone-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
   ]
 }
