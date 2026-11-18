@@ -89,6 +89,12 @@
     #gamePlayer[hidden] { display:none; } #gamePlayer { position:fixed; inset:0; z-index:1200; background:var(--ui-bg); } #gamePlayer iframe { display:block; width:100%; height:100%; border:0; background:var(--ui-bg); }
     #hubToast { position:fixed; left:50%; bottom:calc(env(safe-area-inset-bottom,0px) + 24px); transform:translate(-50%,12px); max-width:calc(100vw - 28px); padding:11px 16px; border:1px solid var(--ui-accent); border-radius:14px; background:var(--ui-panel); color:var(--ui-text); font-weight:800; font-size:.88rem; text-align:center; box-shadow:0 10px 30px #0004; opacity:0; visibility:hidden; transition:.25s; z-index:1500; }
     #hubToast.show { opacity:1; visibility:visible; transform:translate(-50%,0); }
+  
+    .gameTabs{display:flex;gap:9px;margin:14px 0 16px;flex-wrap:wrap}
+    .gameTab{flex:1;min-width:130px;border:1px solid var(--ui-border,#ffffff30);border-radius:12px;padding:11px 9px;background:var(--ui-card,#ffffff12);color:var(--ui-text,inherit);font:inherit;font-weight:800;cursor:pointer;transition:.2s}
+    .gameTab.active{background:linear-gradient(135deg,#218b58,#d5a83c);color:#fff;border-color:transparent;box-shadow:0 5px 16px #0002}
+    .games[hidden]{display:none!important}
+
   </style>
   <link rel="manifest" href="manifest.webmanifest">
 </head>
@@ -98,7 +104,14 @@
       <h1>أهلاً بك في ساحة الألعاب</h1>
       <div class="tools"><button class="sessBtn" id="sessBtn" type="button" aria-label="الجلسة">🔗 جلسة</button><button class="gear" id="settingsBtn" type="button" aria-label="الإعدادات">⚙️</button></div>
     </header>
-    <section class="games" id="games"></section>
+    <nav class="gameTabs" role="tablist" aria-label="أقسام الألعاب">
+      <button class="gameTab active" type="button" data-tab="online" role="tab" aria-selected="true">🎮 ألعاب أون لاين</button>
+      <button class="gameTab" type="button" data-tab="tetris" role="tab" aria-selected="false">🧱 لعبة المكعبات</button>
+    </nav>
+    <section class="games" id="onlineGames" role="tabpanel"></section>
+    <section class="games" id="tetrisGames" role="tabpanel" hidden>
+      <a class="gameCard" href="#" data-game="tetris"><div class="gameIcon chessIcon">🧱</div><strong>لعبة المكعبات</strong></a>
+    </section>
     <footer>حقوق النشر والتعديل sarmad</footer>
   </main>
 
@@ -175,11 +188,22 @@ const GAME_DOCS = {"snake": "\u003c!DOCTYPE html>\n\u003chtml lang=\"ar\" dir=\"
   }
 
   // ===== الألعاب =====
-  $('games').innerHTML = GAMES.map(g => `<a class="gameCard" href="#" data-game="${g.key}"><div class="gameIcon ${g.cls}">${g.icon}</div><strong>${g.name}</strong><span class="arrow">←</span></a>`).join('');
-  $('games').addEventListener('click', e => {
+  $('onlineGames').innerHTML = GAMES.map(g => `<a class="gameCard" href="#" data-game="${g.key}"><div class="gameIcon ${g.cls}">${g.icon}</div><strong>${g.name}</strong></a>`).join('');
+  function showGameTab(tab) {
+    const online = tab === 'online';
+    $('onlineGames').hidden = !online;
+    $('tetrisGames').hidden = online;
+    document.querySelectorAll('.gameTab').forEach(b => {
+      const active = b.dataset.tab === tab;
+      b.classList.toggle('active', active);
+      b.setAttribute('aria-selected', String(active));
+    });
+  }
+  document.querySelectorAll('.gameTab').forEach(b => b.addEventListener('click', () => showGameTab(b.dataset.tab)));
+  ['onlineGames','tetrisGames'].forEach(id => $(id).addEventListener('click', e => {
     const card = e.target.closest('.gameCard'); if (!card) return;
     e.preventDefault(); openGame(card.dataset.game);
-  });
+  }));
   function openGame(key, pushHistory = true) {
     if (!GAME_DOCS[key]) return;
     if (pushHistory) {
@@ -191,10 +215,11 @@ const GAME_DOCS = {"snake": "\u003c!DOCTYPE html>\n\u003chtml lang=\"ar\" dir=\"
     document.querySelector('.page').hidden = true;
     const player = $('gamePlayer'); player.hidden = false; player.replaceChildren();
     const frame = document.createElement('iframe');
-    frame.title = GAMES.find(g => g.key === key).name;
+    frame.title = key === 'tetris' ? 'لعبة المكعبات' : (GAMES.find(g => g.key === key)?.name || 'لعبة');
     frame.setAttribute('allow', 'autoplay; clipboard-write');
     frame.setAttribute('allowfullscreen', '');
-    frame.srcdoc = GAME_DOCS[key];
+    if (key === 'tetris') frame.src = 'tetris.html';
+    else frame.srcdoc = GAME_DOCS[key];
     player.appendChild(frame);
   }
   function goHome(updateAddress = true) {
