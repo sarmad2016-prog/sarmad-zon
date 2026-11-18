@@ -1123,7 +1123,7 @@ function canvasBatchData(source){
  const ctx=canvas.getContext('2d');ctx.drawImage(source,0,0,width,height);
  const src=canvas.toDataURL('image/jpeg',.99);canvas.width=canvas.height=0;return src;
 }
-async function cameraBatchImageFromFile(file){return await fileToDataURL(file);}
+async async function cameraBatchImageFromFile(file){return await fileToDataURL(file);}
 function setButtonLabel(button,label){
  const textNode=Array.from(button.childNodes).find(node=>node.nodeType===3);
  if(textNode)textNode.nodeValue=' '+label;
