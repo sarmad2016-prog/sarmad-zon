@@ -21,6 +21,12 @@
  --acc:#2f7a5c;--acc2:#1d5a40;--grad:linear-gradient(135deg,#1d5a40,#2f7a5c);
  --ok:#39d98a;--bad:#ff6b81;--accText:#fff;
 }
+:root[data-theme="dark"]{
+ --bg0:#101a16;--bg1:#14231d;--card:#1b2c24;--card2:#24382e;
+ --line:#355244;--txt:#edf7f0;--sub:#a9bdb1;--glow:#234b38;
+ --acc:#3a9b70;--acc2:#246747;--grad:linear-gradient(135deg,#246747,#3a9b70);
+ --ok:#39d98a;--bad:#ff6b81;--accText:#fff;
+}
 :root[data-theme="light"]{
  --bg0:#e3ecea;--bg1:#eaf6fc;--card:#ffffff;--card2:#dcebe4;
  --line:#cfdcd8;--txt:#12352a;--sub:#59656d;--glow:#dcebe4;
@@ -62,11 +68,11 @@ header h1{font-size:16px;flex:1;font-weight:800;display:flex;align-items:center;
 .iconbtn:hover{border-color:var(--acc)}
 main{max-width:720px;margin:0 auto;padding:10px 12px}
 .view{display:none}.view.active{display:block}
-#launcher{min-height:calc(100vh - 80px);max-width:500px;margin:12px auto;padding:18px 14px;border-radius:22px;background:linear-gradient(155deg,var(--card),var(--card2));color:var(--txt);border:1px solid var(--line);box-shadow:0 12px 36px rgba(21,43,82,.12)}
+#launcher{min-height:calc(100vh - 80px);display:flex;flex-direction:column;max-width:500px;margin:12px auto;padding:18px 14px;border-radius:22px;background:linear-gradient(155deg,var(--card),var(--card2));color:var(--txt);border:1px solid var(--line);box-shadow:0 12px 36px rgba(21,43,82,.12)}
 #launcher h2{color:var(--txt)}
 #launcher .btn.secondary{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
 
-#launcher .foot{color:var(--sub);border-color:var(--line)}
+#launcher .foot{color:var(--sub);border-color:var(--line);margin-top:auto}
 
 .btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:10px;border:0;border-radius:11px;font-size:13.5px;font-weight:700;cursor:pointer;margin-bottom:7px;transition:.2s}
 .btn:active{transform:scale(.98)}
@@ -180,7 +186,7 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
 .page.selmode img{opacity:.92}
 .page.sel{outline:2.5px solid var(--acc);outline-offset:1px}
 .foot{text-align:center;color:#6d7fa8;font-size:10.5px;padding:10px 0 14px;border-top:1px solid var(--line);margin-top:10px}
-.recentBox{margin:16px auto 0;max-width:480px;padding:12px;border:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--card) 88%,transparent)}
+.recentBox{display:none!important;margin:16px auto 0;max-width:480px;padding:12px;border:1px solid var(--line);border-radius:16px;background:color-mix(in srgb,var(--card) 88%,transparent)}
 .recentHead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;color:var(--txt);flex-wrap:wrap}
 .recentHead h3{font-size:13px}
 .recentTools{display:flex;align-items:center;gap:5px;min-width:0;flex-wrap:wrap;justify-content:flex-end}
@@ -308,6 +314,7 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
 <h2 style="text-align:center;font-size:16px;margin-bottom:3px">مرحباً بك</h2>
 <p style="text-align:center;color:var(--sub);font-size:11.5px;margin-bottom:14px">اختر الأداة التي تريد استخدامها</p>
 <button class="btn primary" id="btnGoScanner" data-ic="camera" style="padding:15px;font-size:14px">ماسح المستندات</button>
+<button class="btn secondary" id="btnCardPrintHome" data-ic="printer" style="padding:13px;font-size:13px">حفظ المستمسكات</button>
 
 <div class="recentBox">
  <div class="recentHead"><h3 data-ic="clock">الملفات الأخيرة</h3><div class="recentTools"><select class="recentFolderFilter" id="recentFolderFilter" aria-label="تصفية حسب المجلد"><option value="">كل الملفات</option></select><button class="recentFolderNew" id="recentFolderNew" type="button">+ مجلد</button><button class="recentSelectMode" id="recentSelectMode" type="button">تحديد</button><button class="recentRefresh" id="recentRefresh" type="button">تحديث</button></div></div>
@@ -325,7 +332,7 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
  <input type="file" id="importFiles" accept=".pdf,.xlsx,.xls,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple class="hidden">
 <div class="row" style="margin-top:0">
 <button class="btn primary" id="btnCam" data-ic="camera">تصوير</button>
-<button class="btn secondary" id="btnUpload" data-ic="image">رفع صور</button>
+<button class="btn primary" id="btnUpload" data-ic="image">رفع صور</button>
 </div>
 <div class="row">
 <button class="btn primary" id="btnCamBatch" data-ic="camera">التقاط عدة صفحات</button>
@@ -473,22 +480,6 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
  <div class="modal-card">
   <h3 data-ic="sliders">إعدادات البرنامج</h3>
   <div style="margin:8px 0 14px;padding-bottom:12px;border-bottom:1px solid var(--line)">
-   <label style="margin-top:0" data-ic="palette">هوية الألوان</label>
-   <p style="font-size:10.5px;color:var(--sub);line-height:1.6;margin-bottom:8px">اختر ثيماً جاهزاً، أو ارفع صورة شعار وسيستخرج البرنامج منها لوناً مميزاً ويطبّقه على الأزرار والتدرجات في كل الشاشات.</p>
-   <div class="themeSwatches">
-     <button class="tswatch" data-c1="#2563eb" data-c2="#1d4ed8" style="background:linear-gradient(135deg,#2563eb,#1d4ed8)" title="أزرق واضح"></button>
-     <button class="tswatch" data-c1="#6d28d9" data-c2="#5b21b6" style="background:linear-gradient(135deg,#6d28d9,#5b21b6)" title="بنفسجي"></button>
-     <button class="tswatch" data-c1="#ea580c" data-c2="#c2410c" style="background:linear-gradient(135deg,#ea580c,#c2410c)" title="برتقالي دافئ"></button>
-     <button class="tswatch" data-c1="#059669" data-c2="#047857" style="background:linear-gradient(135deg,#059669,#047857)" title="أخضر زمردي"></button>
-     <button class="tswatch" data-c1="#db2777" data-c2="#be185d" style="background:linear-gradient(135deg,#db2777,#be185d)" title="وردي"></button>
-   </div>
-   <input type="file" id="themeImgPick" accept="image/*" class="hidden">
-   <div class="row" style="margin-top:0">
-    <button class="btn secondary" id="themeImgBtn" data-ic="image">اختيار صورة</button>
-    <button class="btn ghost" id="themeReset" data-ic="x">استعادة الافتراضي</button>
-   </div>
-  </div>
-  <div style="margin:8px 0 14px;padding-bottom:12px;border-bottom:1px solid var(--line)">
    <label style="margin-top:0" data-ic="disk">النسخ الاحتياطي للمجموعات</label>
    <p style="font-size:10.5px;color:var(--sub);line-height:1.6;margin-bottom:8px">يحفظ أو يستعيد مجموعات الماسح وترتيب المستمسكات وقوالب التخطيط.</p>
    <div class="row" style="margin-top:0">
@@ -552,7 +543,7 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='6.9-test';
+const APP_VERSION='6.10-test';
 
 /* ===== أيقونات SVG بدل الإيموجي =====
    بعض متصفحات الويب فيو المستخدمة في تطبيقات تغليف المواقع (مثل appsgeyser) لا تملك خط إيموجي كامل،
@@ -627,80 +618,7 @@ function toggleTheme(){applyThemePref(themePref==='dark'?'light':'dark')}
 $('btnTheme').onclick=toggleTheme;
 (function(){let t='dark';try{t=localStorage.getItem('sarmadTheme')==='light'?'light':'dark';}catch(e){}applyThemePref(t);})();
 
-/* ===== هوية الألوان من صورة: يستخرج أكثر لون حيوية (saturation) من الصورة ويشتق منه تدرجاً =====*/
-const THEME_KEY='sarmadAccent';
-function hexOf(r,g,b){return '#'+[r,g,b].map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');}
-function rgbToHsl(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h=0,s=0,l=(mx+mn)/2;
- if(mx!==mn){const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);
-  if(mx===r)h=(g-b)/d+(g<b?6:0);else if(mx===g)h=(b-r)/d+2;else h=(r-g)/d+4;h/=6;}
- return[h,s,l];}
-function hslToRgb(h,s,l){if(s===0)return[l*255,l*255,l*255];
- const q=l<.5?l*(1+s):l+s-l*s,p=2*l-q;
- const hue2rgb=(p,q,t)=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;};
- return[hue2rgb(p,q,h+1/3)*255,hue2rgb(p,q,h)*255,hue2rgb(p,q,h-1/3)*255];}
-function accentTextColor(a,b){
- const lum=hex=>{const n=parseInt(String(hex).replace('#',''),16),rgb=[(n>>16)&255,(n>>8)&255,n&255].map(v=>{v/=255;return v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4)});return .2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2]};
- const L=[lum(a),lum(b)],white=Math.min(...L.map(v=>1.05/(v+.05))),dark=Math.min(...L.map(v=>(v+.05)/.05));
- return dark>=white?'#101827':'#fff';
-}
-function setAccentVars(hex1,hex2){
- const r=document.documentElement.style;
- r.setProperty('--acc',hex1);r.setProperty('--acc2',hex2);
- r.setProperty('--accText',accentTextColor(hex1,hex2));
- r.setProperty('--grad','linear-gradient(135deg,'+hex1+','+hex2+')');
- r.setProperty('--glow',hex1+'33');
-}
-function extractThemeFromImage(file){
- return new Promise((resolve,reject)=>{
-  const img=new Image();
-  img.onload=()=>{
-   try{
-    const S=48,c=document.createElement('canvas');c.width=S;c.height=S;
-    const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(img,0,0,S,S);
-    const d=ctx.getImageData(0,0,S,S).data;
-    let bestSat=-1,bh=0,bs=.55,bl=.5;
-    for(let i=0;i<d.length;i+=4){
-     const[h,s,l]=rgbToHsl(d[i],d[i+1],d[i+2]);
-     if(l>.12&&l<.92&&s>bestSat){bestSat=s;bh=h;bs=s;bl=l;}
-    }
-    if(bestSat<.12)bs=.55;
-    bl=Math.max(.42,Math.min(.62,bl));
-    const[r1,g1,b1]=hslToRgb(bh,bs,bl);
-    const[r2,g2,b2]=hslToRgb((bh+.08)%1,Math.min(1,bs+.1),Math.min(.7,bl+.12));
-    resolve([hexOf(r1,g1,b1),hexOf(r2,g2,b2)]);
-   }catch(e){reject(e);}
-  };
-  img.onerror=reject;
-  img.src=URL.createObjectURL(file);
- });
-}
-document.querySelectorAll('.tswatch').forEach(b=>{
- b.onclick=()=>{
-  const c1=b.dataset.c1,c2=b.dataset.c2;
-  setAccentVars(c1,c2);
-  try{localStorage.setItem(THEME_KEY,JSON.stringify([c1,c2]));}catch(e){}
-  toast('تم التطبيق');
- };
-});
-$('themeImgBtn').onclick=()=>$('themeImgPick').click();
-$('themeImgPick').onchange=async e=>{
- const f=e.target.files[0];e.target.value='';if(!f)return;
- toast('جاري استخراج الألوان من الصورة...');
- try{
-  const[c1,c2]=await extractThemeFromImage(f);
-  setAccentVars(c1,c2);
-  try{localStorage.setItem(THEME_KEY,JSON.stringify([c1,c2]));}catch(e2){}
-  toast('تم التطبيق');
- }catch(e2){toast('تعذّر استخراج الألوان من هذه الصورة');}
-};
-$('themeReset').onclick=()=>{
- const r=document.documentElement.style;
-  ['--acc','--acc2','--accText','--grad','--glow'].forEach(v=>r.removeProperty(v));
- try{localStorage.removeItem(THEME_KEY);}catch(e){}
- toast('تمت الاستعادة');
-};
-(function(){try{const v=localStorage.getItem(THEME_KEY);if(v){const[c1,c2]=JSON.parse(v);setAccentVars(c1,c2);}}catch(e){}})();
-
+/* تم حذف تخصيص ألوان الواجهة بناءً على طلب المستخدم. */
 /* ===== تخزين دائم داخل المتصفح (IndexedDB): تبقى المجموعات والصفحات غير المحفوظة محفوظة بعد إغلاق البرنامج =====
    ملاحظة: يعمل هذا عادة بشكل طبيعي عند فتح الملف مباشرة في المتصفح (كروم/فايرفوكس/سفاري)، إلا إذا كان
    المتصفح في وضع التصفح الخفي أو يمنع التخزين لملفات file:// صراحة؛ في هذه الحالة يستمر البرنامج
@@ -1122,14 +1040,9 @@ $('pickCam').onchange=async e=>{
  }
  if(f)loadFile(f);
 };
-$('btnCam').onclick=async()=>{
-  state.groupImageEdit=null;
- if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){try{return await openCam();}catch(err){}}
- $('pickCam').click();
-};
+$('btnCam').onclick=()=>{state.groupImageEdit=null;$('pickCam').click()};
 async function nextCameraBatchPage(){
  if(!state.cameraBatch)return;
- if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){try{await openCam();return}catch(err){}}
  $('pickCam').click();
 }
 function canvasBatchData(source){
@@ -2310,6 +2223,7 @@ function openCardPrint(){
  $('cardPrintModal').classList.remove('hidden');refreshCardPrintPreview();
 }
 $('btnCardPrint').onclick=openCardPrint;
+$('btnCardPrintHome').onclick=()=>{show('home');if(state.pages.length)openCardPrint();else toast('التقط أو ارفع المستمسكات أولاً ثم استخدم حفظ المستمسكات')};
 $('cardPrintClose').onclick=$('cardPrintCancel').onclick=()=>$('cardPrintModal').classList.add('hidden');
 $('cardPrintPreset').onchange=refreshCardPrintPreview;
 $('cardPrintOrientation').onchange=refreshCardPrintPreview;
