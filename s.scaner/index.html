@@ -1496,38 +1496,58 @@ function renderEditor(){
 }
 addEventListener('resize',()=>{if($('editor').classList.contains('active'))alignOverlay();});
 function drawOverlay(){
- const e=state.edit;const svg=$('overlay');
- const W=e.img.width,H=e.img.height;
-  const r=Math.max(18,Math.min(W,H)*0.052);
- let s='<polygon points="'+e.quad.map(p=>p[0]+','+p[1]).join(' ')+'" fill="rgba(79,140,255,.18)" stroke="#6ea3ff" stroke-width="'+(r*0.22)+'"/>';
- e.quad.forEach((p,i)=>{s+='<circle data-i="'+i+'" cx="'+p[0]+'" cy="'+p[1]+'" r="'+r+'" fill="#fff" stroke="#4f8cff" stroke-width="'+(r*0.16)+'"/>';});
+ const e=state.edit,svg=$('overlay'),q=e.quad,W=e.img.width,H=e.img.height;
+ const r=Math.max(18,Math.min(W,H)*0.052),mix=(a,b,t)=>[a[0]+(b[0]-a[0])*t,a[1]+(b[1]-a[1])*t];
+ let s='<polygon points="'+q.map(p=>p[0]+','+p[1]).join(' ')+'" fill="rgba(79,140,255,.16)" stroke="#6ea3ff" stroke-width="'+(r*0.22)+'"/>';
+ for(const t of [1/3,2/3]){
+  const a=mix(q[0],q[3],t),b=mix(q[1],q[2],t),c=mix(q[0],q[1],t),d=mix(q[3],q[2],t);
+  s+='<line x1="'+a[0]+'" y1="'+a[1]+'" x2="'+b[0]+'" y2="'+b[1]+'" stroke="rgba(255,255,255,.78)" stroke-width="'+Math.max(2,r*.08)+'" stroke-dasharray="'+(r*.28)+' '+(r*.2)+'"/>';
+  s+='<line x1="'+c[0]+'" y1="'+c[1]+'" x2="'+d[0]+'" y2="'+d[1]+'" stroke="rgba(255,255,255,.78)" stroke-width="'+Math.max(2,r*.08)+'" stroke-dasharray="'+(r*.28)+' '+(r*.2)+'"/>';
+ }
+ q.forEach((p,i)=>{s+='<circle data-h="c'+i+'" cx="'+p[0]+'" cy="'+p[1]+'" r="'+r+'" fill="#fff" stroke="#287d56" stroke-width="'+(r*.2)+'"/>';});
+ for(let i=0;i<4;i++){
+  const a=q[i],b=q[(i+1)%4],m=mix(a,b,.5);
+  s+='<circle data-h="e'+i+'" cx="'+m[0]+'" cy="'+m[1]+'" r="'+(r*.72)+'" fill="#e7f5ed" stroke="#287d56" stroke-width="'+(r*.16)+'"/>';
+ }
  svg.innerHTML=s;
 }
 (function(){
-  const svg=$('overlay'),lens=$('cropLens'),lensCanvas=$('cropLensCanvas'),lensCtx=lensCanvas.getContext('2d');let drag=-1;
- function toNat(ev){const b=svg.getBoundingClientRect();const e=state.edit;return [(ev.clientX-b.left)/b.width*e.img.width,(ev.clientY-b.top)/b.height*e.img.height];}
-  function drawLens(p){
-   const e=state.edit,W=e.img.width,H=e.img.height,size=lensCanvas.width,span=Math.min(Math.min(W,H),Math.max(24,Math.min(W,H)*.1));
-   const sx=Math.max(0,Math.min(W-span,p[0]-span/2)),sy=Math.max(0,Math.min(H-span,p[1]-span/2));
-   lensCtx.clearRect(0,0,size,size);lensCtx.drawImage(e.img,sx,sy,span,span,0,0,size,size);
-   const x=(p[0]-sx)/span*size,y=(p[1]-sy)/span*size;lensCtx.strokeStyle='#ff3b30';lensCtx.lineWidth=2;
-   lensCtx.beginPath();lensCtx.moveTo(x-9,y);lensCtx.lineTo(x+9,y);lensCtx.moveTo(x,y-9);lensCtx.lineTo(x,y+9);lensCtx.stroke();
-   lens.style.left=p[0]<W/2?'':'8px';lens.style.right=p[0]<W/2?'8px':'';lens.style.top=p[1]<H/2?'':'8px';lens.style.bottom=p[1]<H/2?'8px':'';lens.hidden=false;
-  }
+ const svg=$('overlay'),lens=$('cropLens'),lensCanvas=$('cropLensCanvas'),lensCtx=lensCanvas.getContext('2d');
+ let drag=null,lastPoint=null,startQuad=null;
+ function toNat(ev){const b=svg.getBoundingClientRect(),e=state.edit;return [(ev.clientX-b.left)/b.width*e.img.width,(ev.clientY-b.top)/b.height*e.img.height];}
+ function drawLens(p){
+  const e=state.edit,W=e.img.width,H=e.img.height,size=lensCanvas.width,span=Math.min(Math.min(W,H),Math.max(24,Math.min(W,H)*.1));
+  const sx=Math.max(0,Math.min(W-span,p[0]-span/2)),sy=Math.max(0,Math.min(H-span,p[1]-span/2));
+  lensCtx.clearRect(0,0,size,size);lensCtx.drawImage(e.img,sx,sy,span,span,0,0,size,size);
+  const x=(p[0]-sx)/span*size,y=(p[1]-sy)/span*size;lensCtx.strokeStyle='#ff3b30';lensCtx.lineWidth=2;
+  lensCtx.beginPath();lensCtx.moveTo(x-9,y);lensCtx.lineTo(x+9,y);lensCtx.moveTo(x,y-9);lensCtx.lineTo(x,y+9);lensCtx.stroke();
+  lens.style.left=p[0]<W/2?'':'8px';lens.style.right=p[0]<W/2?'8px':'';lens.style.top=p[1]<H/2?'':'8px';lens.style.bottom=p[1]<H/2?'8px':'';lens.hidden=false;
+ }
  svg.addEventListener('pointerdown',ev=>{
-  const p=toNat(ev);const e=state.edit;
-  const thresh=Math.min(e.img.width,e.img.height)*0.14;
-  let best=-1,bd=1e9;
-  e.quad.forEach((q,i)=>{const d=Math.hypot(q[0]-p[0],q[1]-p[1]);if(d<bd){bd=d;best=i;}});
-  if(bd>thresh)return;
-   drag=best;svg.setPointerCapture(ev.pointerId);ev.preventDefault();drawLens(e.quad[best]);
+  if(!state.edit)return;
+  const p=toNat(ev),e=state.edit,q=e.quad,threshold=Math.min(e.img.width,e.img.height)*.14;
+  const handles=[];
+  q.forEach((v,i)=>handles.push({id:'c'+i,p:v}));
+  for(let i=0;i<4;i++)handles.push({id:'e'+i,p:[(q[i][0]+q[(i+1)%4][0])/2,(q[i][1]+q[(i+1)%4][1])/2]});
+  let best=null,bd=Infinity;for(const h of handles){const d=dist(h.p,p);if(d<bd){bd=d;best=h;}}
+  if(!best||bd>threshold)return;
+  drag=best.id;lastPoint=p;startQuad=q.map(v=>v.slice());svg.setPointerCapture(ev.pointerId);ev.preventDefault();drawLens(best.p);
  });
-  svg.addEventListener('pointermove',ev=>{if(drag<0)return;const e=state.edit;const p=toNat(ev);
-   const next=e.quad.map(q=>q.slice());next[drag]=[Math.max(0,Math.min(e.img.width,p[0])),Math.max(0,Math.min(e.img.height,p[1]))];
-   const minEdge=Math.max(4,Math.min(e.img.width,e.img.height)*.006);
-   if(quadOK(next)&&next.every((q,i)=>dist(q,next[(i+1)%4])>=minEdge)){e.quad=next;drawOverlay();}drawLens(p);});
-  const up=()=>{drag=-1;lens.hidden=true;};
-  svg.addEventListener('pointerup',up);svg.addEventListener('pointercancel',up);svg.addEventListener('lostpointercapture',up);
+ svg.addEventListener('pointermove',ev=>{
+  if(!drag||!state.edit)return;
+  const e=state.edit,p=toNat(ev),dx=p[0]-lastPoint[0],dy=p[1]-lastPoint[1],next=startQuad.map(v=>v.slice());
+  if(drag[0]==='c'){
+   const i=Number(drag.slice(1));next[i]=[Math.max(0,Math.min(e.img.width,p[0])),Math.max(0,Math.min(e.img.height,p[1]))];
+  }else{
+   const i=Number(drag.slice(1)),j=(i+1)%4;
+   for(const k of [i,j])next[k]=[Math.max(0,Math.min(e.img.width,startQuad[k][0]+dx)),Math.max(0,Math.min(e.img.height,startQuad[k][1]+dy))];
+  }
+  const minEdge=Math.max(4,Math.min(e.img.width,e.img.height)*.006);
+  if(quadOK(next)&&next.every((v,i)=>dist(v,next[(i+1)%4])>=minEdge)){e.quad=next;drawOverlay();}
+  drawLens(p);
+ });
+ const up=()=>{drag=null;startQuad=null;lastPoint=null;lens.hidden=true;};
+ svg.addEventListener('pointerup',up);svg.addEventListener('pointercancel',up);svg.addEventListener('lostpointercapture',up);
 })();
 function polyArea(q){let a=0;for(let i=0;i<4;i++){const p=q[i],s=q[(i+1)%4];a+=p[0]*s[1]-s[0]*p[1];}return Math.abs(a)/2;}
 function quadOK(q){
