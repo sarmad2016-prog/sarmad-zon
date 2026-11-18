@@ -19,7 +19,6 @@
  --bg0:#e3ecea;--bg1:#eaf6fc;--card:#ffffff;--card2:#dcebe4;
  --line:#cfdcd8;--txt:#12352a;--sub:#59656d;--glow:#dcebe4;
  --acc:#2f7a5c;--acc2:#1d5a40;--grad:linear-gradient(135deg,#1d5a40,#2f7a5c);
- --gradAI:linear-gradient(135deg,#f5c451,#e6a817);--aiText:#263247;
  --ok:#39d98a;--bad:#ff6b81;--accText:#fff;
 }
 :root[data-theme="light"]{
@@ -74,7 +73,6 @@ main{max-width:720px;margin:0 auto;padding:10px 12px}
 .btn.primary{background:var(--grad);color:var(--accText);box-shadow:0 4px 14px rgba(37,99,235,.24)}
 .btn.secondary{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
 .btn.ghost{background:transparent;color:var(--sub);border:1.5px solid var(--line)}
-.btn.ai{background:var(--gradAI);color:var(--aiText);box-shadow:0 4px 14px rgba(99,102,241,.22)}
 .btn.danger{background:rgba(225,29,72,.12);color:#e11d48;border:1px solid rgba(225,29,72,.42)}
 :root[data-theme="dark"] .btn.danger{color:#ff7b91;background:rgba(225,29,72,.17);border-color:rgba(255,123,145,.5)}
 .btn.back{margin-bottom:9px;color:var(--txt)!important;border:1.5px solid var(--line)!important;background:var(--card2)!important;width:auto;display:inline-flex;padding:7px 12px}
@@ -131,10 +129,13 @@ main{max-width:720px;margin:0 auto;padding:10px 12px}
 
 #cam{position:fixed;inset:0;background:#000;z-index:30;display:none;flex-direction:column}
 #cam.on{display:flex}
-#camStage{position:relative;flex:1;overflow:hidden}
+#camStage{position:relative;flex:1;min-height:0;overflow:hidden}
 #camVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-#camGuide{position:absolute;inset:7% 9%;border:2.5px dashed rgba(255,255,255,.85);border-radius:14px;box-shadow:0 0 0 2000px rgba(0,0,0,.4);pointer-events:none;display:flex;align-items:flex-end;justify-content:center;padding-bottom:10px}
-#camGuide span{background:rgba(0,0,0,.6);color:#fff;font-size:11px;padding:5px 12px;border-radius:20px}
+#camGuide{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);width:max-content;max-width:90%;pointer-events:none;display:flex;justify-content:center;z-index:2}
+#camGuide span{background:rgba(0,0,0,.68);color:#fff;font-size:12px;padding:7px 14px;border-radius:20px;text-align:center}
+#camFlash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:2}
+#camFlash.fire{animation:cam-flash .22s ease-out}
+@keyframes cam-flash{0%{opacity:0}18%{opacity:.92}100%{opacity:0}}
 #camClose{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));left:12px;z-index:3;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);border:1.5px solid rgba(255,255,255,.35);color:#ff8a8a;width:40px;height:40px;border-radius:50%;cursor:pointer}
 #camClose .ic{width:18px;height:18px}
 #camBar{display:flex;justify-content:center;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));background:#000}
@@ -357,7 +358,6 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
 <section id="result" class="view">
 <div class="result-toolbar">
  <button class="btn back" id="btnResultBack" data-ic="arrowBack">رجوع</button>
- <button class="btn ai" id="btnAI" data-ic="robot">تحسين AI</button>
  <button class="btn primary" id="btnAdd" data-ic="plus">إضافة</button>
 </div>
 <canvas id="resCanvas"></canvas>
@@ -484,23 +484,6 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
    </div>
    <input type="file" id="restoreFile" accept="application/json" class="hidden">
   </div>
-  <h3 style="font-size:13px" data-ic="robot">تحسين الذكاء الاصطناعي</h3>
-  <p style="font-size:11px;color:var(--sub);line-height:1.6">عند اتصال البرنامج بالإنترنت يرسل الصورة إلى خدمة تحسين صور عبر API لتفتيحها وتوضيح النص. بدون إعداد يعمل التحسين المحلي فقط.</p>
-  <label>نوع الخدمة</label>
-  <select id="aiMode">
-   <option value="generic">عام — خدمة JSON (تُرجع الصورة)</option>
-   <option value="openai">OpenAI — تحسين الصور (images/edits)</option>
-  </select>
-  <label>رابط الخدمة (Endpoint)</label>
-  <input id="aiUrl" placeholder="يُملأ تلقائياً حسب نوع الخدمة" dir="ltr">
-  <label>مفتاح API</label>
-  <input id="aiKey" type="password" placeholder="sk-..." dir="ltr">
-  <label>الموديل (لخدمة OpenAI فقط)</label>
-  <input id="aiModel" placeholder="gpt-image-1" dir="ltr">
-  <div class="row">
-   <button class="btn secondary" id="aiCancel" data-ic="arrowBack">رجوع</button>
-   <button class="btn primary" id="aiSave">حفظ</button>
-  </div>
  </div>
 </div>
 
@@ -539,7 +522,8 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
 <div id="cam">
  <div id="camStage">
   <video id="camVideo" autoplay playsinline muted></video>
-  <div id="camGuide"><span>ضع الورقة داخل الإطار</span></div>
+  <div id="camFlash"></div>
+  <div id="camGuide"><span>وجّه الكاميرا نحو الورقة وثبّت الهاتف</span></div>
   <button id="camClose" data-ic="x" aria-label="إغلاق الكاميرا"></button>
  </div>
  <div id="camBar"><button id="camShot" data-ic="camera" aria-label="التقاط"></button></div>
@@ -549,7 +533,7 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='6.7';
+const APP_VERSION='6.9';
 
 /* ===== أيقونات SVG بدل الإيموجي =====
    بعض متصفحات الويب فيو المستخدمة في تطبيقات تغليف المواقع (مثل appsgeyser) لا تملك خط إيموجي كامل،
@@ -642,14 +626,9 @@ function accentTextColor(a,b){
 }
 function setAccentVars(hex1,hex2){
  const r=document.documentElement.style;
-  const n=parseInt(String(hex1).replace('#',''),16),[h,s]=rgbToHsl((n>>16)&255,(n>>8)&255,n&255);
-  const ai1=hslToRgb((h+.5)%1,Math.max(.48,s),.54),ai2=hslToRgb((h+.5)%1,Math.max(.48,s),.45);
-  const aiA=hexOf(...ai1),aiB=hexOf(...ai2);
  r.setProperty('--acc',hex1);r.setProperty('--acc2',hex2);
-  r.setProperty('--accText',accentTextColor(hex1,hex2));
+ r.setProperty('--accText',accentTextColor(hex1,hex2));
  r.setProperty('--grad','linear-gradient(135deg,'+hex1+','+hex2+')');
-  r.setProperty('--gradAI','linear-gradient(135deg,'+aiA+','+aiB+')');
-  r.setProperty('--aiText',accentTextColor(aiA,aiB));
  r.setProperty('--glow',hex1+'33');
 }
 function extractThemeFromImage(file){
@@ -697,7 +676,7 @@ $('themeImgPick').onchange=async e=>{
 };
 $('themeReset').onclick=()=>{
  const r=document.documentElement.style;
-  ['--acc','--acc2','--accText','--grad','--gradAI','--aiText','--glow'].forEach(v=>r.removeProperty(v));
+  ['--acc','--acc2','--accText','--grad','--glow'].forEach(v=>r.removeProperty(v));
  try{localStorage.removeItem(THEME_KEY);}catch(e){}
  toast('تمت الاستعادة');
 };
@@ -752,27 +731,8 @@ async function loadPersisted(){
 }
 
 /* ===== إعدادات الذكاء الاصطناعي ===== */
-const AI_DEFAULTS={generic:'https://example.com/v1/enhance',openai:'https://api.openai.com/v1/images/edits'};
-function aiCfg(){try{return JSON.parse(localStorage.getItem('sarmadAI')||'{}')}catch(e){return{}}}
-function saveCfg(c){try{localStorage.setItem('sarmadAI',JSON.stringify(c))}catch(e){}}
-function openSettings(){
- const c=aiCfg();
- $('aiMode').value=c.mode||'generic';
- $('aiUrl').value=c.url||'';
- $('aiKey').value=c.key||'';
- $('aiModel').value=c.model||'gpt-image-1';
- $('settings').classList.remove('hidden');
-}
+function openSettings(){$('settings').classList.remove('hidden');}
 $('btnSettings').onclick=openSettings;
-$('aiCancel').onclick=()=>$('settings').classList.add('hidden');
-$('aiMode').onchange=()=>{
- const u=$('aiUrl').value.trim();
- if(!u||u===AI_DEFAULTS.generic||u===AI_DEFAULTS.openai)$('aiUrl').value=AI_DEFAULTS[$('aiMode').value];
-};
-$('aiSave').onclick=()=>{
- saveCfg({mode:$('aiMode').value,url:$('aiUrl').value.trim(),key:$('aiKey').value.trim(),model:$('aiModel').value.trim()||'gpt-image-1'});
- $('settings').classList.add('hidden');toast('تم الحفظ');
-};
 
 /* ===== نافذة اسم الملف ===== */
 let nameCb=null;
@@ -1152,16 +1112,11 @@ async function nextCameraBatchPage(){
 }
 function canvasBatchData(source){
  const width=source.width||source.videoWidth,height=source.height||source.videoHeight;
- const scale=Math.min(1,2600/Math.max(width,height)),canvas=document.createElement('canvas');
- canvas.width=Math.max(2,Math.round(width*scale));canvas.height=Math.max(2,Math.round(height*scale));
- const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(source,0,0,canvas.width,canvas.height);
- const src=canvas.toDataURL('image/jpeg',.93);canvas.width=canvas.height=0;return src;
+ const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+ const ctx=canvas.getContext('2d');ctx.drawImage(source,0,0,width,height);
+ const src=canvas.toDataURL('image/jpeg',.99);canvas.width=canvas.height=0;return src;
 }
-async function cameraBatchImageFromFile(file){
- if(window.createImageBitmap){try{const bmp=await createImageBitmap(file,{imageOrientation:'from-image'});const src=canvasBatchData(bmp);if(bmp.close)bmp.close();return src}catch(e){}}
- const url=await fileToDataURL(file),img=await new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=url});
- return canvasBatchData(img);
-}
+async function cameraBatchImageFromFile(file){return await imageFileToDataURL(file);}
 function setButtonLabel(button,label){
  const textNode=Array.from(button.childNodes).find(node=>node.nodeType===3);
  if(textNode)textNode.nodeValue=' '+label;
@@ -1192,21 +1147,42 @@ $('btnCamBatch').onclick=async()=>{state.groupImageEdit=null;fileQueue=[];state.
 $('btnImportFiles').onclick=()=>{state.groupImageEdit=null;$('importFiles').click()};
 $('importFiles').onchange=async e=>{const files=Array.from(e.target.files||[]);e.target.value='';if(files.length)await importWorkFiles(files)};
 
+const HEIC_CONVERTER_SRC='https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js';
+async function decodeImageDataURL(src){
+ return await new Promise((resolve,reject)=>{
+  const img=new Image();img.onload=()=>resolve(img);img.onerror=()=>reject(new Error('image-decode-failed'));img.src=src;
+ });
+}
+async function imageFileToDataURL(file){
+ const src=await fileToDataURL(file);
+ try{await decodeImageDataURL(src);return src;}
+ catch(originalError){
+  const ext=(String(file.name||'').split('.').pop()||'').toLowerCase();
+  const type=String(file.type||'').toLowerCase();
+  const isHeic=/^(heic|heif|hwic)$/.test(ext)||/image\/(heic|heif)/.test(type);
+  if(!isHeic)throw originalError;
+  const loaded=await loadScriptOnce(HEIC_CONVERTER_SRC);
+  if(!loaded||typeof window.heic2any!=='function')throw new Error('heic-converter-unavailable');
+  const converted=await window.heic2any({blob:file,toType:'image/jpeg',quality:0.98});
+  const blob=Array.isArray(converted)?converted[0]:converted;
+  if(!blob)throw new Error('heic-conversion-failed');
+  const convertedURL=await fileToDataURL(blob);
+  await decodeImageDataURL(convertedURL);
+  return convertedURL;
+ }
+}
 async function loadFile(f){
  try{
-  let src=null;
-  if(window.createImageBitmap){
-   try{
-    const bmp=await createImageBitmap(f,{imageOrientation:'from-image'});
-    const c=document.createElement('canvas');c.width=bmp.width;c.height=bmp.height;
-    c.getContext('2d').drawImage(bmp,0,0);
-    if(bmp.close)bmp.close();
-    src=c;
-   }catch(e){}
-  }
-  if(!src)src=await fileToDataURL(f);
+  const src=await imageFileToDataURL(f);
   openEditor(src);
- }catch(e){toast('تعذر قراءة الصورة');}
+ }catch(e){
+  const ext=(String(f.name||'').split('.').pop()||'غير معروف').toUpperCase();
+  if(/^(HEIC|HEIF|HWIC)$/.test(ext)){
+   toast('تعذّر تحويل صورة '+ext+' — تأكد من اتصال الإنترنت ثم جرّب مرة أخرى');
+  }else{
+   toast('تعذّر فتح الصورة بصيغة '+ext+' — قد تكون صيغة غير مدعومة أو ملفاً تالفاً');
+  }
+ }
 }
 const SHEETJS_SRC='https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js';
 let sheetJsPromise=null;
@@ -1399,23 +1375,56 @@ async function importWorkFiles(files,options={}){
 }
 let camOnCapture=null;
 async function openCam(onCapture){
- const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment',width:{ideal:1920},height:{ideal:1920}}});
-  camOnCapture=typeof onCapture==='function'?onCapture:null;
-  $('camGuide').querySelector('span').textContent=state.cameraBatch?'التقط الصفحات بالتتابع، ثم اضغط × لمراجعتها':'ضع الورقة داخل الإطار';
-  state.camStream=stream;$('camVideo').srcObject=stream;$('cam').classList.add('on');
-}
-function closeCam(){if(state.camStream){state.camStream.getTracks().forEach(t=>t.stop());state.camStream=null;}$('cam').classList.remove('on');camOnCapture=null;}
-$('camClose').onclick=()=>{const wasBatch=state.cameraBatch;state.cameraBatch=false;closeCam();if(wasBatch)reviewCameraBatch()};
-$('camShot').onclick=()=>{
- const v=$('camVideo');if(!v.videoWidth)return;
- const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);
- if(state.cameraBatch){
-  state.cameraBatchImages.push({src:canvasBatchData(c)});
-  $('camGuide').querySelector('span').textContent='تم التقاط '+state.cameraBatchImages.length+' صفحة — صوّر التالية أو اضغط × للمراجعة';
-  toast('تم التقاط الصفحة '+state.cameraBatchImages.length);
-  return;
+ const videoConstraints={facingMode:{ideal:'environment'},width:{ideal:2560},height:{ideal:1920},aspectRatio:{ideal:0.75}};
+ const stream=await navigator.mediaDevices.getUserMedia({audio:false,video:videoConstraints});
+ const track=stream.getVideoTracks()[0];
+ state.camImageCapture=null;
+ if(track&&'ImageCapture' in window){try{state.camImageCapture=new ImageCapture(track);}catch(e){state.camImageCapture=null;}}
+ if(track&&track.getCapabilities&&track.applyConstraints){
+  try{
+   const caps=track.getCapabilities();
+   if(Array.isArray(caps.focusMode)&&caps.focusMode.includes('continuous')){
+    await track.applyConstraints({advanced:[{focusMode:'continuous'}]});
+   }
+  }catch(e){console.debug('Continuous autofocus is not available on this device',e);}
  }
- const onCapture=camOnCapture;closeCam();if(onCapture){Promise.resolve(onCapture(c)).catch(()=>toast('تعذّرت معالجة الصورة الملتقطة'));}else openEditor(c);
+ camOnCapture=typeof onCapture==='function'?onCapture:null;
+ $('camGuide').querySelector('span').textContent=state.cameraBatch?'التقط الصفحات بالتتابع، وسيظهر تأكيد لكل لقطة':'وجّه الكاميرا نحو الورقة وثبّت الهاتف';
+ state.camStream=stream;
+ $('camVideo').srcObject=stream;
+ $('cam').classList.add('on');
+ try{await $('camVideo').play();}catch(e){}
+}
+function closeCam(){if(state.camStream){state.camStream.getTracks().forEach(t=>t.stop());state.camStream=null;}state.camImageCapture=null;$('cam').classList.remove('on');camOnCapture=null;}
+function cameraCaptureFeedback(){
+ const flash=$('camFlash');flash.classList.remove('fire');void flash.offsetWidth;flash.classList.add('fire');
+ try{if(navigator.vibrate)navigator.vibrate(65);}catch(e){}
+ try{const AC=window.AudioContext||window.webkitAudioContext;if(AC){const ctx=new AC(),osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='sine';osc.frequency.value=1150;gain.gain.setValueAtTime(.0001,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.12,ctx.currentTime+.012);gain.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.12);osc.connect(gain);gain.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+.13);osc.onended=()=>ctx.close();}}catch(e){}
+}
+async function captureCameraPhoto(){
+ const track=state.camStream?.getVideoTracks?.()[0];
+ if(state.camImageCapture&&track&&track.readyState==='live'){
+  try{const blob=await state.camImageCapture.takePhoto();if(blob&&blob.size)return await fileToDataURL(blob);}catch(e){console.warn('Full-resolution camera capture unavailable; using preview frame',e);}
+ }
+ const v=$('camVideo');if(!v.videoWidth)throw new Error('camera-not-ready');
+ const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);
+ return c.toDataURL('image/jpeg',.99);
+}
+$('camClose').onclick=()=>{const wasBatch=state.cameraBatch;state.cameraBatch=false;closeCam();if(wasBatch)reviewCameraBatch()};
+$('camShot').onclick=async()=>{
+ const btn=$('camShot');if(btn.disabled)return;btn.disabled=true;
+ try{
+  const src=await captureCameraPhoto();cameraCaptureFeedback();
+  if(state.cameraBatch){
+   state.cameraBatchImages.push({src});
+   $('camGuide').querySelector('span').textContent='تم التقاط '+state.cameraBatchImages.length+' صفحة — صوّر التالية أو اضغط × للمراجعة';
+   toast('تم التقاط الصفحة '+state.cameraBatchImages.length);
+   return;
+  }
+  const onCapture=camOnCapture;closeCam();
+  if(onCapture){Promise.resolve(onCapture(src)).catch(()=>toast('تعذّرت معالجة الصورة الملتقطة'));}else openEditor(src);
+ }catch(e){toast('تعذّر التقاط الصورة — حاول مرة أخرى');}
+ finally{if($('cam').classList.contains('on'))btn.disabled=false;}
 };
 function getSrc(el){
  if(typeof el==='string')return el;
@@ -1890,7 +1899,7 @@ function homography(dst,src){
 $('btnDone').onclick=()=>{doWarp();show('result');filterId='boost';buildChips();applyFilter();};
 function doWarp(){
  const e=state.edit;const img=e.img;
- const CAP=2400;const sc=Math.min(1,CAP/Math.max(img.width,img.height));
+ const CAP=4000;const sc=Math.min(1,CAP/Math.max(img.width,img.height));
  const sw=Math.max(2,Math.round(img.width*sc)),sh=Math.max(2,Math.round(img.height*sc));
  const sc2=document.createElement('canvas');sc2.width=sw;sc2.height=sh;
  const sctx=sc2.getContext('2d',{willReadFrequently:true});sctx.drawImage(img,0,0,sw,sh);
@@ -1901,7 +1910,7 @@ function doWarp(){
  const ratio=snapRatio(estimateRatio(q,sw,sh,r0));
  const base=Math.sqrt(Math.max(top,bot)*Math.max(lef,rig)*ratio);
  const ow0=base,oh0=base/ratio;
- const CAP2=2000;const s2=Math.min(1,CAP2/Math.max(ow0,oh0));
+ const CAP2=3508;const s2=Math.min(1,CAP2/Math.max(ow0,oh0));
  const ow=Math.max(16,Math.round(ow0*s2)),oh=Math.max(16,Math.round(oh0*s2));
  const Hm=homography([[0,0],[ow,0],[ow,oh],[0,oh]],q);
  const out=new ImageData(ow,oh);const sd=src.data,od=out.data;
@@ -1919,6 +1928,7 @@ function doWarp(){
    od[o+3]=255;
   }}
  state.warpData=out;state.warpW=ow;state.warpH=oh;
+ toast('الدقة الأصلية: '+img.width+' × '+img.height+' — بعد القص: '+ow+' × '+oh);
 }
 function sharpen(d,W,H,amt){
  const s=new Uint8ClampedArray(d);
@@ -2055,56 +2065,12 @@ function applyFilter(){
  const c=$('resCanvas');c.width=state.warpW;c.height=state.warpH;
  c.getContext('2d').putImageData(img,0,0);
 }
-const FILTERS=[['orig','image','أصلي'],['boost','sparkle','تحسين'],['whiten','sun','تفتيح'],['super','wand','فائق'],['flat','ruler','تسوية الورق'],['bw','circleSolid','أبيض وأسود'],['gray','halfCircle','رمادي']];
+const FILTERS=[['orig','image','أصلي'],['boost','sparkle','تحسين تلقائي'],['whiten','sun','تفتيح'],['super','wand','فائق'],['flat','ruler','تسوية الورق'],['bw','circleSolid','أبيض وأسود'],['gray','halfCircle','رمادي']];
 function buildChips(){
  const w=$('filters');w.innerHTML='';
  FILTERS.forEach(f=>{const b=document.createElement('button');b.className='chip'+(f[0]===filterId?' on':'');b.innerHTML=ic(f[1])+'<span>'+f[2]+'</span>';
   b.onclick=()=>{filterId=f[0];buildChips();applyFilter();};w.appendChild(b);});
 }
-
-/* التحسين بالذكاء الاصطناعي */
-$('btnAI').onclick=async()=>{
- const cfg=aiCfg();
- if(!cfg.url||(cfg.mode!=='openai'&&!cfg.key)){
-  openSettings();toast('أضف رابط الخدمة ومفتاحها من ⚙️ — وبدونها استخدم فلاتر التحسين المحلية ☀️');return;
- }
- if(!navigator.onLine){toast('لا يوجد اتصال بالإنترنت — استخدم التحسين المحلي ☀️');return;}
- const btn=$('btnAI');btn.disabled=true;const old=btn.textContent;btn.textContent='⏳ جاري التحسين...';
- try{
-  const dataUrl=$('resCanvas').toDataURL('image/jpeg',0.95);
-  let out='';
-  if(cfg.mode==='openai'){
-   const blob=await(await fetch(dataUrl)).blob();
-   const fd=new FormData();
-   fd.append('model',cfg.model||'gpt-image-1');
-   fd.append('prompt','Enhance this scanned document photo: brighten it, whiten the background, remove shadows, sharpen text. Keep all content exactly unchanged.');
-   fd.append('image',blob,'page.png');
-   const res=await fetch(cfg.url||AI_DEFAULTS.openai,{method:'POST',headers:{Authorization:'Bearer '+cfg.key},body:fd});
-   if(!res.ok)throw new Error('HTTP '+res.status);
-   const j=await res.json();
-   if(j.data&&j.data[0])out=j.data[0].url||('data:image/png;base64,'+j.data[0].b64_json);
-  }else{
-   const res=await fetch(cfg.url,{method:'POST',
-    headers:Object.assign({'Content-Type':'application/json'},cfg.key?{Authorization:'Bearer '+cfg.key}:{}),
-    body:JSON.stringify({image:dataUrl,prompt:'Enhance and brighten this scanned document: whiten background, sharpen text'})});
-   if(!res.ok)throw new Error('HTTP '+res.status);
-   const j=await res.json();
-   out=j.image||j.output||j.url||j.result||'';
-   if(!out&&j.data&&j.data[0])out=j.data[0].url||('data:image/png;base64,'+j.data[0].b64_json);
-  }
-  if(!out)throw new Error('bad');
-  if(out.indexOf('data:')!==0)out='data:image/png;base64,'+out;
-  const img=new Image();
-  await new Promise((ok,err)=>{img.onload=ok;img.onerror=err;img.src=out;});
-  const cw=document.createElement('canvas');cw.width=img.naturalWidth||img.width;cw.height=img.naturalHeight||img.height;
-  cw.getContext('2d').drawImage(img,0,0);
-  state.warpData=cw.getContext('2d').getImageData(0,0,cw.width,cw.height);
-  state.warpW=cw.width;state.warpH=cw.height;
-  filterId='orig';buildChips();applyFilter();
-  toast('تم التحسين');
- }catch(e){toast('تعذر التحسين بالذكاء الاصطناعي — تحقق من ⚙️ والمفتاح والاتصال');}
- finally{btn.disabled=false;btn.textContent=old;}
-};
 
 /* استخراج النص (OCR) عبر مكتبة Tesseract.js — تُحمَّل من الإنترنت عند أول استخدام فقط (لا تعمل بدون اتصال) */
 const scriptLoadPromises=new Map();
@@ -2223,7 +2189,7 @@ function renderPages(){
     renderPages();
    }else openPreview(p.url);
   };
-  div.querySelector('.del').onclick=()=>{state.pages.splice(idx,1);renderPages();persistPages();};
+  div.querySelector('.del').onclick=()=>{if(!confirm('هل تريد حذف الصفحة رقم '+(idx+1)+'؟'))return;state.pages.splice(idx,1);renderPages();persistPages();};
   div.querySelector('.sav').onclick=()=>download(p.url,'scan-page'+(idx+1)+'.jpg');
   div.querySelector('.up').onclick=()=>{if(idx>0){const t=state.pages[idx-1];state.pages[idx-1]=state.pages[idx];state.pages[idx]=t;renderPages();persistPages();}};
   div.querySelector('.dn').onclick=()=>{if(idx<n-1){const t=state.pages[idx+1];state.pages[idx+1]=state.pages[idx];state.pages[idx]=t;renderPages();persistPages();}};
