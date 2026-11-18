@@ -1,4 +1,4 @@
-const CACHE = 's-scaner-test-v4';
+const CACHE = 's-scaner-test-v5';
 const ROOT = new URL('./', self.location).pathname;
 const FILES = [ROOT, ROOT + 'index.html', ROOT + 'manifest.webmanifest'];
 self.addEventListener('install', event => {
