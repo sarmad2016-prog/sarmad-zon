@@ -125,12 +125,16 @@ main{max-width:720px;margin:0 auto;padding:10px 12px}
 .chip.on{background:var(--grad);border-color:transparent;color:var(--accText)}
 
 #resCanvas{width:100%;border-radius:12px;background:#0a0e18;display:block;border:1px solid var(--line)}
+.crop-preset-row{align-items:center;gap:10px}
+.crop-preset-row label{font-size:12px;color:var(--sub);white-space:nowrap}
+.crop-preset-row select{flex:1;min-width:0;padding:9px;border-radius:9px;border:1px solid var(--line);background:var(--bg1);color:var(--txt);font:inherit}
 .hidden{display:none!important}
 
 #cam{position:fixed;inset:0;background:#000;z-index:30;display:none;flex-direction:column}
 #cam.on{display:flex}
 #camStage{position:relative;flex:1;min-height:0;overflow:hidden}
 #camVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#camShotPreview{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#050505;z-index:3}
 #camGuide{position:absolute;left:50%;bottom:14px;transform:translateX(-50%);width:max-content;max-width:90%;pointer-events:none;display:flex;justify-content:center;z-index:2}
 #camGuide span{background:rgba(0,0,0,.68);color:#fff;font-size:12px;padding:7px 14px;border-radius:20px;text-align:center}
 #camFlash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:2}
@@ -138,7 +142,11 @@ main{max-width:720px;margin:0 auto;padding:10px 12px}
 @keyframes cam-flash{0%{opacity:0}18%{opacity:.92}100%{opacity:0}}
 #camClose{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));left:12px;z-index:3;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);border:1.5px solid rgba(255,255,255,.35);color:#ff8a8a;width:40px;height:40px;border-radius:50%;cursor:pointer}
 #camClose .ic{width:18px;height:18px}
-#camBar{display:flex;justify-content:center;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));background:#000}
+#camBar{display:flex;justify-content:center;align-items:center;gap:12px;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));background:#000}
+#camReviewBar{display:flex;gap:10px;width:100%;max-width:360px}
+#camReviewBar .btn{flex:1;min-height:46px}
+#camAccept{background:linear-gradient(135deg,#167447,#22965d);color:#fff}
+#camRetake{background:linear-gradient(135deg,#a97818,#d5a63b);color:#17130a}
 #camShot{display:flex;align-items:center;justify-content:center;background:#fff;border:4px solid var(--card2);color:#161616;width:68px;height:68px;border-radius:50%;cursor:pointer}
 #camShot .ic{width:26px;height:26px}
 
@@ -349,6 +357,17 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
 <button class="btn ghost" id="btnAuto" data-ic="sparkle">تلقائي</button>
 <button class="btn ghost" id="btnManual" data-ic="cropCorners">يدوي</button>
 </div>
+<div class="row crop-preset-row">
+<label for="cropPreset">نسبة القص</label>
+<select id="cropPreset" aria-label="نسبة القص">
+ <option value="auto">تلقائي</option>
+ <option value="a4">A4</option>
+ <option value="letter">Letter</option>
+ <option value="square">مربع 1:1</option>
+ <option value="4:3">4:3</option>
+ <option value="16:9">16:9</option>
+</select>
+</div>
 <div class="row">
 <button class="btn ghost" id="btnRotate" data-ic="rotate">تدوير</button>
 <button class="btn primary" id="btnDone" data-ic="check">قص ومعالجة</button>
@@ -522,11 +541,18 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
 <div id="cam">
  <div id="camStage">
   <video id="camVideo" autoplay playsinline muted></video>
+  <img id="camShotPreview" alt="معاينة الصورة الملتقطة" hidden>
   <div id="camFlash"></div>
   <div id="camGuide"><span>وجّه الكاميرا نحو الورقة وثبّت الهاتف</span></div>
   <button id="camClose" data-ic="x" aria-label="إغلاق الكاميرا"></button>
  </div>
- <div id="camBar"><button id="camShot" data-ic="camera" aria-label="التقاط"></button></div>
+ <div id="camBar">
+  <button id="camShot" data-ic="camera" aria-label="التقاط"></button>
+  <div id="camReviewBar" class="hidden">
+   <button class="btn secondary" id="camRetake" type="button">إعادة التقاط</button>
+   <button class="btn primary" id="camAccept" type="button">موافق</button>
+  </div>
+ </div>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -582,7 +608,7 @@ function hydrateIcons(){
   el.insertAdjacentHTML('afterbegin',ic(el.dataset.ic));
  });
 }
-const state={pages:[],groups:[],edit:null,warpData:null,warpW:0,warpH:0,camStream:null,cameraBatch:false,cameraBatchImages:[],cameraBatchReview:false,cameraBatchReviewIndex:0,groupImageEdit:null};
+const state={pages:[],groups:[],edit:null,warpData:null,warpW:0,warpH:0,camStream:null,camPendingPhoto:null,cameraBatch:false,cameraBatchImages:[],cameraBatchReview:false,cameraBatchReviewIndex:0,groupImageEdit:null};
 let filterId='boost';
 let fileQueue=[];
 let pageSelMode=false;const pageSel=new Set();
@@ -1375,6 +1401,8 @@ async function importWorkFiles(files,options={}){
 }
 let camOnCapture=null;
 async function openCam(onCapture){
+ state.camPendingPhoto=null;
+ $('camShotPreview').hidden=true;$('camVideo').hidden=false;$('camShot').classList.remove('hidden');$('camReviewBar').classList.add('hidden');
  const videoConstraints={facingMode:{ideal:'environment'},width:{ideal:2560},height:{ideal:1920},aspectRatio:{ideal:0.75}};
  const stream=await navigator.mediaDevices.getUserMedia({audio:false,video:videoConstraints});
  const track=stream.getVideoTracks()[0];
@@ -1395,7 +1423,7 @@ async function openCam(onCapture){
  $('cam').classList.add('on');
  try{await $('camVideo').play();}catch(e){}
 }
-function closeCam(){if(state.camStream){state.camStream.getTracks().forEach(t=>t.stop());state.camStream=null;}state.camImageCapture=null;$('cam').classList.remove('on');camOnCapture=null;}
+function closeCam(){if(state.camStream){state.camStream.getTracks().forEach(t=>t.stop());state.camStream=null;}state.camImageCapture=null;state.camPendingPhoto=null;$('camShotPreview').hidden=true;$('camVideo').hidden=false;$('camShot').classList.remove('hidden');$('camReviewBar').classList.add('hidden');$('cam').classList.remove('on');camOnCapture=null;}
 function cameraCaptureFeedback(){
  const flash=$('camFlash');flash.classList.remove('fire');void flash.offsetWidth;flash.classList.add('fire');
  try{if(navigator.vibrate)navigator.vibrate(65);}catch(e){}
@@ -1412,19 +1440,34 @@ async function captureCameraPhoto(){
 }
 $('camClose').onclick=()=>{const wasBatch=state.cameraBatch;state.cameraBatch=false;closeCam();if(wasBatch)reviewCameraBatch()};
 $('camShot').onclick=async()=>{
- const btn=$('camShot');if(btn.disabled)return;btn.disabled=true;
+ const btn=$('camShot');if(btn.disabled||state.camPendingPhoto)return;btn.disabled=true;
  try{
   const src=await captureCameraPhoto();cameraCaptureFeedback();
-  if(state.cameraBatch){
-   state.cameraBatchImages.push({src});
-   $('camGuide').querySelector('span').textContent='تم التقاط '+state.cameraBatchImages.length+' صفحة — صوّر التالية أو اضغط × للمراجعة';
-   toast('تم التقاط الصفحة '+state.cameraBatchImages.length);
-   return;
-  }
-  const onCapture=camOnCapture;closeCam();
-  if(onCapture){Promise.resolve(onCapture(src)).catch(()=>toast('تعذّرت معالجة الصورة الملتقطة'));}else openEditor(src);
+  state.camPendingPhoto=src;
+  $('camShotPreview').src=src;$('camShotPreview').hidden=false;$('camVideo').hidden=true;
+  $('camShot').classList.add('hidden');$('camReviewBar').classList.remove('hidden');
+  $('camGuide').querySelector('span').textContent='راجع وضوح الكتابة: موافق لاعتماد الصورة أو إعادة التقاط لتصويرها من جديد';
  }catch(e){toast('تعذّر التقاط الصورة — حاول مرة أخرى');}
- finally{if($('cam').classList.contains('on'))btn.disabled=false;}
+ finally{btn.disabled=false;}
+};
+$('camRetake').onclick=()=>{
+ if(!state.camPendingPhoto)return;
+ state.camPendingPhoto=null;$('camShotPreview').removeAttribute('src');$('camShotPreview').hidden=true;
+ $('camVideo').hidden=false;$('camShot').classList.remove('hidden');$('camReviewBar').classList.add('hidden');
+ $('camGuide').querySelector('span').textContent='ثبّت الهاتف وتأكد من وضوح الكتابة ثم التقط الصورة';
+};
+$('camAccept').onclick=()=>{
+ const src=state.camPendingPhoto;if(!src)return;
+ if(state.cameraBatch){
+  state.cameraBatchImages.push({src});state.camPendingPhoto=null;
+  $('camShotPreview').removeAttribute('src');$('camShotPreview').hidden=true;$('camVideo').hidden=false;
+  $('camShot').classList.remove('hidden');$('camReviewBar').classList.add('hidden');
+  $('camGuide').querySelector('span').textContent='تم اعتماد '+state.cameraBatchImages.length+' صفحة — التقط الصفحة التالية أو اضغط × للمراجعة';
+  toast('تم اعتماد الصفحة '+state.cameraBatchImages.length);
+  return;
+ }
+ const onCapture=camOnCapture;closeCam();
+ if(onCapture){Promise.resolve(onCapture(src)).catch(()=>toast('تعذّرت معالجة الصورة الملتقطة'));}else openEditor(src);
 };
 function getSrc(el){
  if(typeof el==='string')return el;
@@ -1852,8 +1895,9 @@ $('btnAuto').onclick=()=>{state.edit.quad=autoDetect(state.edit.img);drawOverlay
 $('btnManual').onclick=()=>{
  const e=state.edit;const m=0.08,W=e.img.width,H=e.img.height;
  e.quad=[[W*m,H*m],[W*(1-m),H*m],[W*(1-m),H*(1-m)],[W*m,H*(1-m)]];
- drawOverlay();toast('اسحب الزوايا الأربع لتحديد الورقة يدوياً');
+ drawOverlay();toast('اسحب الزوايا أو منتصف الأضلاع لتحديد الورقة بدقة');
 };
+$('cropPreset').onchange=()=>{if(state.edit){state.edit.cropRatio=$('cropPreset').value;toast('تم اختيار نسبة القص — ستُطبق على الصورة الناتجة');}};
 function backOrNextQueued(){
  if(fileQueue.length){
   const next=fileQueue.shift();
@@ -1907,7 +1951,8 @@ function doWarp(){
  const q=e.quad.map(p=>[p[0]*sc,p[1]*sc]);
  const top=dist(q[0],q[1]),bot=dist(q[3],q[2]),lef=dist(q[0],q[3]),rig=dist(q[1],q[2]);
  const r0=((top+bot)/2)/((lef+rig)/2);
- const ratio=snapRatio(estimateRatio(q,sw,sh,r0));
+ const selectedRatio=({a4:210/297,letter:8.5/11,square:1,'4:3':4/3,'16:9':16/9})[e.cropRatio];
+ const ratio=selectedRatio||snapRatio(estimateRatio(q,sw,sh,r0));
  const base=Math.sqrt(Math.max(top,bot)*Math.max(lef,rig)*ratio);
  const ow0=base,oh0=base/ratio;
  const CAP2=3508;const s2=Math.min(1,CAP2/Math.max(ow0,oh0));
