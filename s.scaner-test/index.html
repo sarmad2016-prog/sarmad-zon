@@ -1423,7 +1423,15 @@ function getSrc(el){
 function openEditor(srcEl){
  const src=getSrc(srcEl);
  const img=new Image();
-  img.onload=()=>{state.edit={img:img,src:src};state.edit.quad=autoDetect(img);show('editor');renderEditor();toast(state.edit.quad.detected===false?'لم تُكتشف حواف واضحة — حرّك الزوايا لتحديد الورقة':'حرّك الزوايا أو استخدم التحديد التلقائي');};
+  img.onload=()=>{
+  state.edit={img:img,src:src};state.edit.quad=autoDetect(img);show('editor');renderEditor();
+  const editRef=state.edit,initialQuad=JSON.stringify(editRef.quad);
+  toast(editRef.quad.detected===false?'جارٍ تحسين اكتشاف الحواف — يمكنك تعديلها يدوياً':'جارٍ فحص حدود الورقة وتحسين القص تلقائياً');
+  ensureOpenCV().then(ready=>{
+   if(!ready||state.edit!==editRef||JSON.stringify(editRef.quad)!==initialQuad)return;
+   const improved=autoDetectOpenCV(img);if(improved){editRef.quad=improved;drawOverlay();toast('تم تحسين تحديد حواف الورقة تلقائياً');}
+  });
+ };
  img.onerror=()=>toast('تعذر تحميل الصورة');
  img.src=src;
 }
