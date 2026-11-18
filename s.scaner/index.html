@@ -256,6 +256,24 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
 .card-print-preview{display:flex;flex-direction:column;align-items:center;gap:12px;max-height:38vh;overflow:auto;padding:8px;background:var(--card2);border:1px solid var(--line);border-radius:12px}
 .card-print-page{display:block;width:min(100%,320px);height:auto;background:#fff;box-shadow:0 2px 10px #0003}
 @media(max-width:520px){.card-print-controls{grid-template-columns:1fr}.card-print-hint{grid-column:auto}.card-print-card{padding:14px}}
+
+/* تحسين ملاءمة شاشة الهاتف */
+@media(max-width:600px){
+ #launcher{
+  min-height:calc(100vh - 112px);
+  min-height:calc(100svh - 112px);
+  margin-top:8px;
+  margin-bottom:8px;
+  padding-top:14px;
+  padding-bottom:10px;
+ }
+ #launcher .foot{margin-top:auto;padding-top:7px;padding-bottom:6px}
+ #editor #stage{max-height:34vh;max-height:34svh}
+ #editor #base{max-height:34vh;max-height:34svh}
+ #editor .btn.back{margin-bottom:5px;padding:6px 10px}
+ #editor .row{margin-top:5px;gap:6px}
+ #editor .row .btn{padding:8px 6px;font-size:12px}
+}
 </style>
 </head>
 <body class="launcher-mode">
@@ -541,7 +559,7 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='6.10.2';
+const APP_VERSION='6.10.3';
 
 /* ===== أيقونات SVG بدل الإيموجي =====
    بعض متصفحات الويب فيو المستخدمة في تطبيقات تغليف المواقع (مثل appsgeyser) لا تملك خط إيموجي كامل،
