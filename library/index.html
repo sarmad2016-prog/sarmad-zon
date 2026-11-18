@@ -151,18 +151,38 @@ h1 {
 .app.featured p { color: rgba(255, 255, 255, .85); }
 .app.featured .open { background: #fff; color: var(--green-900); }
 
-/* مكان للبرامج القادمة */
+/* إعلان الألعاب الجديدة */
 .soon {
-    display: grid;
-    place-items: center;
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 10px;
     min-height: 200px;
+    padding: 25px;
     border-radius: var(--radius-lg);
-    border: 2px dashed var(--line);
-    color: var(--muted);
-    font-size: 15px;
-    text-align: center;
-    padding: 20px;
+    color: #fff;
+    text-decoration: none;
+    background:
+      radial-gradient(circle at 88% 12%, rgba(255,221,132,.34), transparent 28%),
+      linear-gradient(125deg, #103f30 0%, #18734d 52%, #b88932 145%);
+    border: 1px solid rgba(255,255,255,.38);
+    box-shadow: 0 14px 32px rgba(13,63,41,.22), inset 0 1px 0 rgba(255,255,255,.2);
+    transition: transform .25s ease, box-shadow .25s ease;
 }
+.soon::before,.soon::after{content:"";position:absolute;z-index:-1;border:1px solid rgba(255,255,255,.16);border-radius:50%;pointer-events:none}
+.soon::before{width:190px;height:190px;left:-55px;top:-85px;box-shadow:0 0 0 18px rgba(255,255,255,.035),0 0 0 38px rgba(255,255,255,.025)}
+.soon::after{width:90px;height:90px;right:18px;bottom:-48px;background:rgba(255,255,255,.06)}
+.soon:hover{transform:translateY(-4px);box-shadow:0 19px 38px rgba(13,63,41,.28)}
+.soon .soon-kicker{display:inline-flex;align-items:center;gap:7px;padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);font-size:12px;font-weight:800;letter-spacing:.2px}
+.soon .soon-title{margin:0;font-size:clamp(20px,3vw,26px);font-weight:800;line-height:1.35;color:#fff}
+.soon .soon-desc{margin:0;max-width:48ch;font-size:15px;line-height:1.8;color:rgba(255,255,255,.88)}
+.soon .soon-cta{display:inline-flex;align-items:center;gap:9px;margin-top:3px;padding:10px 17px;border-radius:12px;background:linear-gradient(135deg,#ffe29a,#d8a83f);color:#26331e;font-weight:800;box-shadow:0 5px 14px rgba(0,0,0,.16)}
+.soon .soon-cta span{font-size:19px;line-height:1}
+@media(max-width:520px){.soon{min-height:190px;padding:20px}.soon .soon-desc{font-size:14px}.soon .soon-title{font-size:21px}}
 
 /* ---------- من نحن ---------- */
 .about {
@@ -309,9 +329,16 @@ apps.forEach(app => {
     list.appendChild(a);
 });
 
-const soon = document.createElement("div");
+const soon = document.createElement("a");
 soon.className = "soon";
-soon.textContent = "برامج جديدة قريباً";
+soon.href = "../games/";
+soon.setAttribute("aria-label", "تمت إضافة ألعاب جديدة، انتقل إلى ساحة الألعاب");
+soon.innerHTML = `
+    <span class="soon-kicker">✦ جديد في مكتبتك الرقمية</span>
+    <h2 class="soon-title">🎮 تمت إضافة ألعاب جديدة!</h2>
+    <p class="soon-desc">وقت التسلية صار أحلى! أضفنا ألعاباً جديدة إلى ساحة الألعاب، افتح القسم واكتشفها وجرّبها الآن.</p>
+    <span class="soon-cta">جرّب الألعاب الآن <span>←</span></span>
+`;
 list.appendChild(soon);
 </script>
 
