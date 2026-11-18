@@ -273,6 +273,13 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
  #editor .btn.back{margin-bottom:5px;padding:6px 10px}
  #editor .row{margin-top:5px;gap:6px}
  #editor .row .btn{padding:8px 6px;font-size:12px}
+ /* ملاءمة شاشة نتيجة القص والمعالجة للهاتف */
+ #result #resCanvas{width:100%;height:auto;max-height:42svh;object-fit:contain}
+ #result .result-toolbar{margin-bottom:5px}
+ #result .filters{padding:4px 0;gap:5px}
+ #result .chip{padding:6px 9px;font-size:11px}
+ #result>.row{margin-top:5px;gap:6px}
+ #result>.row .btn{padding:8px 6px;font-size:12px}
 }
 </style>
 </head>
@@ -559,7 +566,7 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='6.10.3';
+const APP_VERSION='6.10.4';
 
 /* ===== أيقونات SVG بدل الإيموجي =====
    بعض متصفحات الويب فيو المستخدمة في تطبيقات تغليف المواقع (مثل appsgeyser) لا تملك خط إيموجي كامل،
