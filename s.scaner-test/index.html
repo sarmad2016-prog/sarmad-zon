@@ -138,9 +138,22 @@ main{max-width:720px;margin:0 auto;padding:10px 12px}
 @keyframes cam-flash{0%{opacity:0}18%{opacity:.92}100%{opacity:0}}
 #camClose{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));left:12px;z-index:3;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);border:1.5px solid rgba(255,255,255,.35);color:#ff8a8a;width:40px;height:40px;border-radius:50%;cursor:pointer}
 #camClose .ic{width:18px;height:18px}
-#camBar{display:flex;justify-content:center;padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));background:#000}
-#camShot{display:flex;align-items:center;justify-content:center;background:#fff;border:4px solid var(--card2);color:#161616;width:68px;height:68px;border-radius:50%;cursor:pointer}
+#camBar{display:flex;align-items:center;justify-content:space-between;gap:9px;padding:10px 12px calc(12px + env(safe-area-inset-bottom,0px));background:#000}
+#camControls{display:flex;flex:1;min-width:0;align-items:center;gap:7px;flex-wrap:wrap;color:#fff}
+.cam-control{display:flex;align-items:center;gap:4px;font-size:10px;color:#e9eee9}
+.cam-control input[type=range]{width:70px;accent-color:#d6b45c}
+.cam-control select{max-width:100px;background:#202520;color:#fff;border:1px solid #69756a;border-radius:7px;padding:5px;font-size:10px}
+#camShot{display:flex;align-items:center;justify-content:center;background:#fff;border:4px solid var(--card2);color:#161616;width:62px;height:62px;flex:0 0 62px;border-radius:50%;cursor:pointer}
 #camShot .ic{width:26px;height:26px}
+#camNative{font-size:10px;padding:8px 9px;white-space:nowrap;background:#b99945;color:#17170f;border:0;border-radius:9px;font-weight:800;cursor:pointer}
+#camNative .ic{width:14px;height:14px}
+#confirmModal .modal-card{max-width:360px;text-align:center}
+#confirmModal .confirm-icon{width:48px;height:48px;margin:0 auto 10px;border-radius:15px;display:grid;place-items:center;background:rgba(190,65,65,.13);color:#d95e5e}
+#confirmModal .confirm-icon .ic{width:24px;height:24px}
+#confirmModal h3{justify-content:center;font-size:16px}
+#confirmModal .confirm-message{font-size:13px;line-height:1.8;color:var(--sub);margin:8px 0 16px}
+#confirmModal .confirm-actions{display:flex;gap:9px}
+#confirmModal .confirm-actions button{flex:1}
 
 .modal{position:fixed;inset:0;z-index:60;background:rgba(5,8,18,.7);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:14px}
 .modal-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;width:100%;max-width:400px}
@@ -519,14 +532,20 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
  </div>
 </div>
 
+<div id="confirmModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+ <div class="modal-card"><div class="confirm-icon" id="confirmIcon"></div><h3 id="confirmTitle">تأكيد الحذف</h3><p class="confirm-message" id="confirmMessage"></p>
+ <div class="confirm-actions"><button class="btn ghost" id="confirmCancel" type="button">إلغاء</button><button class="btn danger" id="confirmOk" type="button">حذف</button></div></div>
+</div>
 <div id="cam">
- <div id="camStage">
-  <video id="camVideo" autoplay playsinline muted></video>
-  <div id="camFlash"></div>
-  <div id="camGuide"><span>وجّه الكاميرا نحو الورقة وثبّت الهاتف</span></div>
-  <button id="camClose" data-ic="x" aria-label="إغلاق الكاميرا"></button>
+ <div id="camStage"><video id="camVideo" autoplay playsinline muted></video><div id="camFlash"></div>
+  <div id="camGuide"><span>وجّه الكاميرا نحو الورقة وثبّت الهاتف</span></div><button id="camClose" data-ic="x" aria-label="إغلاق الكاميرا"></button>
  </div>
- <div id="camBar"><button id="camShot" data-ic="camera" aria-label="التقاط"></button></div>
+ <div id="camBar"><div id="camControls">
+  <label class="cam-control" id="camZoomRow" hidden>تقريب <input id="camZoom" type="range"></label>
+  <label class="cam-control" id="camExposureRow" hidden>إضاءة <input id="camExposure" type="range"></label>
+  <label class="cam-control" id="camIsoRow" hidden>حساسية <input id="camIso" type="range"></label>
+  <label class="cam-control" id="camFocusRow" hidden>تركيز <select id="camFocus"></select></label>
+ </div><button id="camNative" type="button">كاميرا الهاتف</button><button id="camShot" data-ic="camera" aria-label="التقاط"></button></div>
 </div>
 <div class="toast" id="toast"></div>
 
@@ -757,13 +776,16 @@ $('nameOk').onclick=()=>{
 /* نافذة بثلاثة خيارات (نعم/لا/إلغاء) تُرجع وعداً بالقيمة 'yes'|'no'|'cancel' */
 function askYesNoCancel(msg,title,icon){
  return new Promise(resolve=>{
-  $('ync3Title').innerHTML=ic(icon||'camera')+'<span>'+(title||'')+'</span>';
-  $('ync3Msg').textContent=msg;
-  $('ync3Modal').classList.remove('hidden');
-  const done=v=>{$('ync3Modal').classList.add('hidden');resolve(v);};
-  $('ync3Yes').onclick=()=>done('yes');
-  $('ync3No').onclick=()=>done('no');
-  $('ync3Cancel').onclick=()=>done('cancel');
+  $('ync3Title').innerHTML=ic(icon||'camera')+'<span>'+(title||'')+'</span>';$('ync3Msg').textContent=msg;$('ync3Modal').classList.remove('hidden');
+  const done=v=>{$('ync3Modal').classList.add('hidden');resolve(v);};$('ync3Yes').onclick=()=>done('yes');$('ync3No').onclick=()=>done('no');$('ync3Cancel').onclick=()=>done('cancel');
+ });
+}
+function askConfirm(message,title,okLabel,cancelLabel){
+ return new Promise(resolve=>{
+  $('confirmTitle').textContent=title||'تأكيد الحذف';$('confirmMessage').textContent=message||'هل تريد بالتأكيد حذف هذا العنصر؟';$('confirmIcon').innerHTML=ic('trash');
+  $('confirmOk').textContent=okLabel||'حذف';$('confirmCancel').textContent=cancelLabel||'إلغاء';$('confirmOk').className='btn '+((okLabel&&okLabel!=='حذف')?'primary':'danger');$('confirmModal').classList.remove('hidden');
+  const done=v=>{$('confirmModal').classList.add('hidden');$('confirmOk').onclick=null;$('confirmCancel').onclick=null;resolve(v);};
+  $('confirmOk').onclick=()=>done(true);$('confirmCancel').onclick=()=>done(false);
  });
 }
 
@@ -863,7 +885,7 @@ $('recentRefresh').onclick=()=>loadRecentFiles();
  $('recentCancelSelect').onclick=()=>{recentSelectionMode=false;recentSelectedKeys.clear();renderRecentFiles()};
  $('recentDeleteSelected').onclick=async()=>{
   const items=selectedRecentItems();if(!items.length){toast('حدد مستندات أو مجموعات أولاً');return}
-  if(!confirm('مسح '+items.length+' عنصر من قائمة الملفات الأخيرة؟ ستبقى المجموعات الأصلية محفوظة.'))return;
+  if(!await askConfirm('سيتم مسح '+items.length+' عنصر من قائمة الملفات الأخيرة. ستبقى المجموعات الأصلية محفوظة.','مسح الملفات الأخيرة','مسح'))return;
   const keys=new Set(items.map(recentEntryKey));recentFiles=recentFiles.filter(f=>!keys.has(recentEntryKey(f)));
   items.filter(f=>f.kind).forEach(f=>{const key=recentEntryKey(f);if(!recentHiddenIds.includes(key))recentHiddenIds.push(key)});
   keys.forEach(key=>{delete recentFolderMap[key];recentSelectedKeys.delete(key)});
@@ -1051,7 +1073,7 @@ $('viewerDeleteImage').onclick=async()=>{
  if(!group.pages.length)return;
  const last=group.pages.length<=1;
   const promptText=last?'هذه آخر صورة. ستبقى المجموعة فارغة ويمكنك إضافة صورة بديلة لاحقاً. هل تريد المتابعة؟':'حذف الصورة الحالية فقط؟ ستبقى بقية صور المجموعة محفوظة.';
- if(!confirm(promptText))return;
+ if(!await askConfirm(promptText,'حذف الصورة'))return;
  group.pages.splice(v.index,1);await persistGroupSave(group);renderGroups();await loadRecentFiles();
   openScannerGroup(group,Math.min(v.index,Math.max(0,group.pages.length-1)));toast(last?'حُذفت الصورة وبقيت المجموعة جاهزة لإضافة بديل':'حُذفت الصورة المحددة وبقيت بقية المجموعة');
 };
@@ -1348,42 +1370,35 @@ async function importWorkFiles(files,options={}){
 }
 let camOnCapture=null;
 async function openCam(onCapture){
- const videoConstraints={facingMode:{ideal:'environment'},width:{ideal:2560},height:{ideal:1920},aspectRatio:{ideal:0.75}};
- const stream=await navigator.mediaDevices.getUserMedia({audio:false,video:videoConstraints});
- const track=stream.getVideoTracks()[0];
- state.camImageCapture=null;
+ const videoConstraints={facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30,max:30}};
+ const stream=await navigator.mediaDevices.getUserMedia({audio:false,video:videoConstraints}),track=stream.getVideoTracks()[0];
+ state.camImageCapture=null;state.camTrack=track||null;
  if(track&&'ImageCapture' in window){try{state.camImageCapture=new ImageCapture(track);}catch(e){state.camImageCapture=null;}}
- if(track&&track.getCapabilities&&track.applyConstraints){
-  try{
-   const caps=track.getCapabilities();
-   if(Array.isArray(caps.focusMode)&&caps.focusMode.includes('continuous')){
-    await track.applyConstraints({advanced:[{focusMode:'continuous'}]});
-   }
-  }catch(e){console.debug('Continuous autofocus is not available on this device',e);}
- }
- camOnCapture=typeof onCapture==='function'?onCapture:null;
- $('camGuide').querySelector('span').textContent=state.cameraBatch?'التقط الصفحات بالتتابع، وسيظهر تأكيد لكل لقطة':'وجّه الكاميرا نحو الورقة وثبّت الهاتف';
- state.camStream=stream;
- $('camVideo').srcObject=stream;
- $('cam').classList.add('on');
- try{await $('camVideo').play();}catch(e){}
+ if(track&&track.applyConstraints){try{const caps=track.getCapabilities?track.getCapabilities():{};if(Array.isArray(caps.focusMode)&&caps.focusMode.includes('continuous'))await track.applyConstraints({advanced:[{focusMode:'continuous'}]});}catch(e){console.debug('Continuous autofocus is not available on this device',e);}configureCameraControls(track);}
+ camOnCapture=typeof onCapture==='function'?onCapture:null;$('camGuide').querySelector('span').textContent=state.cameraBatch?'التقط الصفحات بالتتابع، ويمكنك استخدام كاميرا الهاتف الأصلية':'وجّه الكاميرا نحو الورقة وثبّت الهاتف';
+ state.camStream=stream;$('camVideo').srcObject=stream;$('cam').classList.add('on');try{await $('camVideo').play();}catch(e){}
 }
-function closeCam(){if(state.camStream){state.camStream.getTracks().forEach(t=>t.stop());state.camStream=null;}state.camImageCapture=null;$('cam').classList.remove('on');camOnCapture=null;}
+function configureCameraControls(track){
+ const caps=track&&track.getCapabilities?track.getCapabilities():{};
+ const setRange=(rowId,inputId,key)=>{const row=$(rowId),el=$(inputId),c=caps[key];if(!c||typeof c.min!=='number'||typeof c.max!=='number'||c.max<=c.min){row.hidden=true;return}
+  row.hidden=false;el.min=c.min;el.max=c.max;el.step=c.step||((c.max-c.min)/100)||.1;el.value=typeof c.value==='number'?c.value:(c.min+c.max)/2;el.oninput=()=>track.applyConstraints({advanced:[{[key]:Number(el.value)}]}).catch(()=>{});};
+ setRange('camZoomRow','camZoom','zoom');setRange('camExposureRow','camExposure','exposureCompensation');setRange('camIsoRow','camIso','iso');
+ const focus=$('camFocus'),modes=caps.focusMode;if(Array.isArray(modes)&&modes.length){focus.innerHTML='';const names={continuous:'تركيز تلقائي مستمر','single-shot':'تركيز تلقائي عند الطلب',manual:'تركيز يدوي'};
+  modes.forEach(mode=>{const o=document.createElement('option');o.value=mode;o.textContent=names[mode]||mode;focus.appendChild(o)});focus.value=modes.includes('continuous')?'continuous':modes[0];focus.onchange=()=>track.applyConstraints({advanced:[{focusMode:focus.value}]}).catch(()=>{});$('camFocusRow').hidden=false;
+ }else $('camFocusRow').hidden=true;
+}
+function closeCam(){if(state.camStream){state.camStream.getTracks().forEach(t=>t.stop());state.camStream=null;}state.camImageCapture=null;state.camTrack=null;$('cam').classList.remove('on');camOnCapture=null;}
 function cameraCaptureFeedback(){
  const flash=$('camFlash');flash.classList.remove('fire');void flash.offsetWidth;flash.classList.add('fire');
  try{if(navigator.vibrate)navigator.vibrate(65);}catch(e){}
  try{const AC=window.AudioContext||window.webkitAudioContext;if(AC){const ctx=new AC(),osc=ctx.createOscillator(),gain=ctx.createGain();osc.type='sine';osc.frequency.value=1150;gain.gain.setValueAtTime(.0001,ctx.currentTime);gain.gain.exponentialRampToValueAtTime(.12,ctx.currentTime+.012);gain.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+.12);osc.connect(gain);gain.connect(ctx.destination);osc.start();osc.stop(ctx.currentTime+.13);osc.onended=()=>ctx.close();}}catch(e){}
 }
 async function captureCameraPhoto(){
- const track=state.camStream?.getVideoTracks?.()[0];
- if(state.camImageCapture&&track&&track.readyState==='live'){
-  try{const blob=await state.camImageCapture.takePhoto();if(blob&&blob.size)return await fileToDataURL(blob);}catch(e){console.warn('Full-resolution camera capture unavailable; using preview frame',e);}
- }
- const v=$('camVideo');if(!v.videoWidth)throw new Error('camera-not-ready');
- const c=document.createElement('canvas');c.width=v.videoWidth;c.height=v.videoHeight;c.getContext('2d').drawImage(v,0,0);
- return c.toDataURL('image/jpeg',.99);
+ const track=state.camStream?.getVideoTracks?.()[0];if(!state.camImageCapture||!track||track.readyState!=='live')throw new Error('native-camera-required');
+ const blob=await state.camImageCapture.takePhoto();if(!blob||!blob.size)throw new Error('empty-camera-photo');return await fileToDataURL(blob);
 }
 $('camClose').onclick=()=>{const wasBatch=state.cameraBatch;state.cameraBatch=false;closeCam();if(wasBatch)reviewCameraBatch()};
+$('camNative').onclick=()=>{closeCam();$('pickCam').click();};
 $('camShot').onclick=async()=>{
  const btn=$('camShot');if(btn.disabled)return;btn.disabled=true;
  try{
@@ -1396,7 +1411,7 @@ $('camShot').onclick=async()=>{
   }
   const onCapture=camOnCapture;closeCam();
   if(onCapture){Promise.resolve(onCapture(src)).catch(()=>toast('تعذّرت معالجة الصورة الملتقطة'));}else openEditor(src);
- }catch(e){toast('تعذّر التقاط الصورة — حاول مرة أخرى');}
+ }catch(e){if(e&&e.message==='native-camera-required'){toast('هذا المتصفح لا يدعم التقاط صورة أصلية من المعاينة. استخدم كاميرا الهاتف.');closeCam();$('pickCam').click();}else toast('تعذّر التقاط الصورة الأصلية — جرّب كاميرا الهاتف');}
  finally{if($('cam').classList.contains('on'))btn.disabled=false;}
 };
 function getSrc(el){
@@ -1782,6 +1797,26 @@ function autoDetectCore(getGray,W,H){
   return quadOK(q)?q:inset();
  }catch(e){return inset();}
 }
+/* محرك كشف إضافي باستخدام OpenCV.js — يُحمّل عند طلب التحديد التلقائي فقط */
+const OPENCV_SRC='https://docs.opencv.org/4.x/opencv.js';let opencvLoadPromise=null;
+async function ensureOpenCV(){if(window.cv&&window.cv.Mat)return true;if(!opencvLoadPromise)opencvLoadPromise=(async()=>{const ok=await loadScriptOnce(OPENCV_SRC);if(!ok)return false;const started=Date.now();while(Date.now()-started<25000){if(window.cv&&window.cv.Mat)return true;await new Promise(r=>setTimeout(r,100));}return false;})().catch(()=>false);return opencvLoadPromise;}
+function autoDetectOpenCV(img){
+ const cv=window.cv;if(!cv||!cv.Mat)return null;const W=img.naturalWidth||img.width,H=img.naturalHeight||img.height,scale=Math.min(1,1200/Math.max(W,H)),w=Math.max(8,Math.round(W*scale)),h=Math.max(8,Math.round(H*scale)),canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;canvas.getContext('2d',{willReadFrequently:true}).drawImage(img,0,0,w,h);
+ let src=null,gray=null,blur=null,edges=null,closed=null,hierarchy=null,kernel=null;const mats=[];
+ try{src=cv.imread(canvas);gray=new cv.Mat();blur=new cv.Mat();edges=new cv.Mat();closed=new cv.Mat();hierarchy=new cv.Mat();cv.cvtColor(src,gray,cv.COLOR_RGBA2GRAY);cv.GaussianBlur(gray,blur,new cv.Size(5,5),0,0,cv.BORDER_DEFAULT);
+  const lum=new Float32Array(w*h);for(let i=0;i<lum.length;i++)lum[i]=gray.data[i];let best=null,bestScore=0;
+  const evaluate=mask=>{const contours=new cv.MatVector(),hier=new cv.Mat();mats.push(contours,hier);cv.findContours(mask,contours,hier,cv.RETR_LIST,cv.CHAIN_APPROX_SIMPLE);
+   for(let i=0;i<contours.size();i++){const contour=contours.get(i),approx=new cv.Mat();mats.push(contour,approx);const area=Math.abs(cv.contourArea(contour));if(area<w*h*.07||area>w*h*.99)continue;const peri=cv.arcLength(contour,true);cv.approxPolyDP(contour,approx,.018*peri,true);if(approx.rows!==4||!cv.isContourConvex(approx))continue;
+    const pts=[];for(let j=0;j<4;j++)pts.push([approx.data32S[j*2],approx.data32S[j*2+1]]);const q=orderQuad(pts);if(!quadOK(q))continue;
+    let maxDev=0;for(let j=0;j<4;j++){const p=q[j],a=q[(j+3)%4],b=q[(j+1)%4],ux=a[0]-p[0],uy=a[1]-p[1],vx=b[0]-p[0],vy=b[1]-p[1],cs=(ux*vx+uy*vy)/(Math.hypot(ux,uy)*Math.hypot(vx,vy)+1e-9);maxDev=Math.max(maxDev,Math.abs(Math.acos(Math.max(-1,Math.min(1,cs)))*180/Math.PI-90));}if(maxDev>55)continue;
+    const score=scoreQuad(q,area,lum,w,h);if(score>bestScore){bestScore=score;best=q;}
+   }};
+  kernel=cv.getStructuringElement(cv.MORPH_RECT,new cv.Size(3,3));for(const [lo,hi] of [[35,110],[60,160],[90,220]]){cv.Canny(blur,edges,lo,hi);cv.morphologyEx(edges,closed,cv.MORPH_CLOSE,kernel);evaluate(closed);}
+  const binary=new cv.Mat();mats.push(binary);cv.threshold(blur,binary,0,255,cv.THRESH_BINARY|cv.THRESH_OTSU);evaluate(binary);cv.bitwise_not(binary,binary);evaluate(binary);
+  if(!best||bestScore<.40)return null;const result=best.map(p=>[Math.max(0,Math.min(W,p[0]/scale)),Math.max(0,Math.min(H,p[1]/scale))]);result.detected=true;return result;
+ }catch(e){console.warn('OpenCV document detection failed',e);return null;}
+ finally{if(kernel)kernel.delete();mats.forEach(m=>{try{m.delete()}catch(e){}});[src,gray,blur,edges,closed,hierarchy].forEach(m=>{try{if(m)m.delete()}catch(e){}});}
+}
 function autoDetect(img){
  const W=img.naturalWidth||img.width,H=img.naturalHeight||img.height;
  const mark=q=>{const base=[[.06,.06],[.94,.06],[.94,.94],[.06,.94]];q.detected=!q.every((p,i)=>Math.abs(p[0]/W-base[i][0])<.002&&Math.abs(p[1]/H-base[i][1])<.002);return q;};
@@ -1821,7 +1856,7 @@ function snapRatio(r){
  }
  return r;
 }
-$('btnAuto').onclick=()=>{state.edit.quad=autoDetect(state.edit.img);drawOverlay();toast(state.edit.quad.detected?'تم تحديد الحواف — عدّل الزوايا إن لزم':'لم تُكتشف حواف واضحة — حرّك الزوايا يدوياً');};
+$('btnAuto').onclick=async()=>{const btn=$('btnAuto');if(btn.disabled)return;btn.disabled=true;const old=btn.textContent;btn.textContent='جارٍ تجهيز الكشف...';try{const ready=await ensureOpenCV(),q=ready?autoDetectOpenCV(state.edit.img):null;state.edit.quad=q||autoDetect(state.edit.img);drawOverlay();toast(q?'تم تحديد الورقة بمحرك كشف الحواف المتقدم — راجع الزوايا':'لم يتوفر كشف موثوق بالمحرك المتقدم؛ تم استخدام الكشف الاحتياطي');}catch(e){state.edit.quad=autoDetect(state.edit.img);drawOverlay();toast('تم استخدام الكشف الاحتياطي');}finally{btn.disabled=false;btn.textContent=old;}};
 $('btnManual').onclick=()=>{
  const e=state.edit;const m=0.08,W=e.img.width,H=e.img.height;
  e.quad=[[W*m,H*m],[W*(1-m),H*m],[W*(1-m),H*(1-m)],[W*m,H*(1-m)]];
@@ -2162,7 +2197,7 @@ function renderPages(){
     renderPages();
    }else openPreview(p.url);
   };
-  div.querySelector('.del').onclick=()=>{if(!confirm('هل تريد حذف الصفحة رقم '+(idx+1)+'؟'))return;state.pages.splice(idx,1);renderPages();persistPages();};
+  div.querySelector('.del').onclick=async()=>{if(!await askConfirm('سيتم حذف الصفحة رقم '+(idx+1)+' نهائياً من الصفحات الحالية.','حذف الصفحة'))return;state.pages.splice(idx,1);renderPages();persistPages();};
   div.querySelector('.sav').onclick=()=>download(p.url,'scan-page'+(idx+1)+'.jpg');
   div.querySelector('.up').onclick=()=>{if(idx>0){const t=state.pages[idx-1];state.pages[idx-1]=state.pages[idx];state.pages[idx]=t;renderPages();persistPages();}};
   div.querySelector('.dn').onclick=()=>{if(idx<n-1){const t=state.pages[idx+1];state.pages[idx+1]=state.pages[idx];state.pages[idx]=t;renderPages();persistPages();}};
@@ -2293,19 +2328,17 @@ $('cardPrintMake').onclick=async()=>{
  finally{btn.disabled=false;btn.textContent='إنشاء PDF للطباعة';}
 };
 
-$('btnClear').onclick=()=>{if(state.pages.length&&confirm('حذف كل الصفحات؟')){state.pages=[];fileQueue=[];pageSel.clear();renderPages();persistPages();}};
+$('btnClear').onclick=async()=>{if(state.pages.length&&await askConfirm('سيتم حذف جميع الصفحات الحالية نهائياً.','مسح كل الصفحات')){state.pages=[];fileQueue=[];pageSel.clear();renderPages();persistPages();}};
 $('btnPageSelMode').onclick=()=>{
  pageSelMode=!pageSelMode;pageSel.clear();
  $('btnPageSelMode').classList.toggle('on',pageSelMode);
  $('pageSelBar').classList.toggle('hidden',!pageSelMode);
  renderPages();
 };
-$('btnPageSelDel').onclick=()=>{
+$('btnPageSelDel').onclick=async()=>{
  if(!pageSel.size){toast('حدد صفحة واحدة على الأقل');return;}
- if(!confirm('حذف '+pageSel.size+' صفحة محددة؟'))return;
- state.pages=state.pages.filter(p=>!pageSel.has(p.id));
- pageSel.clear();renderPages();persistPages();
- toast('تم الحذف');
+ if(!await askConfirm('سيتم حذف '+pageSel.size+' صفحة محددة نهائياً.','حذف الصفحات المحددة'))return;
+ state.pages=state.pages.filter(p=>!pageSel.has(p.id));pageSel.clear();renderPages();persistPages();toast('تم الحذف');
 };
 function openPreview(url){$('previewImg').src=url;$('previewModal').classList.remove('hidden');}
 $('previewClose').onclick=()=>$('previewModal').classList.add('hidden');
@@ -2343,27 +2376,24 @@ function renderGroups(){
   div.querySelector('.gname').textContent=g.name;
   div.querySelector('input').onchange=e=>{g.sel=e.target.checked;div.classList.toggle('sel',g.sel);};
    div.querySelector('.gedit').onclick=()=>{askName('إعادة تسمية المجموعة',n=>{g.name=n;renderGroups();persistGroupSave(g).then(loadRecentFiles);},'pencil');};
-   div.querySelector('.gdel').onclick=()=>{if(confirm('حذف المجموعة «'+g.name+'» نهائياً؟')){state.groups=state.groups.filter(x=>x.id!==g.id);renderGroups();persistGroupDelete(g.id).then(loadRecentFiles);}};
+   div.querySelector('.gdel').onclick=async()=>{if(await askConfirm('سيتم حذف المجموعة «'+g.name+'» نهائياً مع صورها.','حذف المجموعة')){state.groups=state.groups.filter(x=>x.id!==g.id);renderGroups();persistGroupDelete(g.id).then(loadRecentFiles);}};
    div.querySelector('.gthumb').onclick=()=>openScannerGroup(g);
    div.querySelector('.ginfo').onclick=()=>openScannerGroup(g);
   wrap.appendChild(div);
  });
 }
-$('btnDelGroups').onclick=()=>{
- const sel=state.groups.filter(g=>g.sel);
- if(!sel.length){toast('حدد مجموعة واحدة على الأقل للحذف');return;}
- if(!confirm('حذف '+sel.length+' مجموعة محددة نهائياً؟'))return;
- state.groups=state.groups.filter(g=>!g.sel);
- renderGroups();toast('تم الحذف ✓');
- Promise.all(sel.map(g=>persistGroupDelete(g.id))).then(loadRecentFiles);
+$('btnDelGroups').onclick=async()=>{
+ const sel=state.groups.filter(g=>g.sel);if(!sel.length){toast('حدد مجموعة واحدة على الأقل للحذف');return;}
+ if(!await askConfirm('سيتم حذف '+sel.length+' مجموعة محددة نهائياً مع صورها.','حذف المجموعات'))return;
+ state.groups=state.groups.filter(g=>!g.sel);renderGroups();toast('تم الحذف ✓');Promise.all(sel.map(g=>persistGroupDelete(g.id))).then(loadRecentFiles);
 };
 $('btnMergeGroups').onclick=()=>{
  const sel=state.groups.filter(g=>g.sel);
  if(sel.length<2){toast('حدد مجموعتين على الأقل لدمجهما');return;}
- askName('اسم المجموعة المدمجة',name=>{
+ askName('اسم المجموعة المدمجة',async name=>{
   const pages=[];sel.forEach(g=>pages.push(...g.pages));
    const ng={id:Date.now()+Math.random(),name:name,pages:pages,sel:false,createdAt:Date.now()};
-  const keep=confirm('سيتم إنشاء مجموعة مدمجة «'+name+'» من '+pages.length+' صفحة.\n\nهل تريد الاحتفاظ بالمجموعات الأصلية ('+sel.length+') أيضاً؟\n\nموافق = احتفظ بها\nإلغاء = احذفها بعد الدمج');
+  const keep=await askConfirm('سيتم إنشاء مجموعة مدمجة «'+name+'» من '+pages.length+' صفحة. هل تريد الاحتفاظ بالمجموعات الأصلية أيضاً؟','الاحتفاظ بالمجموعات الأصلية','احتفظ بالأصلية','احذف الأصلية');
    state.groups.push(ng);const writes=[persistGroupSave(ng)];
   if(!keep){
    state.groups=state.groups.filter(g=>!g.sel);
