@@ -19,7 +19,6 @@
  --bg0:#e3ecea;--bg1:#eaf6fc;--card:#ffffff;--card2:#dcebe4;
  --line:#cfdcd8;--txt:#12352a;--sub:#59656d;--glow:#dcebe4;
  --acc:#2f7a5c;--acc2:#1d5a40;--grad:linear-gradient(135deg,#1d5a40,#2f7a5c);
- --gradAI:linear-gradient(135deg,#f5c451,#e6a817);--aiText:#263247;
  --ok:#39d98a;--bad:#ff6b81;--accText:#fff;
 }
 :root[data-theme="light"]{
@@ -74,7 +73,6 @@ main{max-width:720px;margin:0 auto;padding:10px 12px}
 .btn.primary{background:var(--grad);color:var(--accText);box-shadow:0 4px 14px rgba(37,99,235,.24)}
 .btn.secondary{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
 .btn.ghost{background:transparent;color:var(--sub);border:1.5px solid var(--line)}
-.btn.ai{background:var(--gradAI);color:var(--aiText);box-shadow:0 4px 14px rgba(99,102,241,.22)}
 .btn.danger{background:rgba(225,29,72,.12);color:#e11d48;border:1px solid rgba(225,29,72,.42)}
 :root[data-theme="dark"] .btn.danger{color:#ff7b91;background:rgba(225,29,72,.17);border-color:rgba(255,123,145,.5)}
 .btn.back{margin-bottom:9px;color:var(--txt)!important;border:1.5px solid var(--line)!important;background:var(--card2)!important;width:auto;display:inline-flex;padding:7px 12px}
@@ -628,14 +626,9 @@ function accentTextColor(a,b){
 }
 function setAccentVars(hex1,hex2){
  const r=document.documentElement.style;
-  const n=parseInt(String(hex1).replace('#',''),16),[h,s]=rgbToHsl((n>>16)&255,(n>>8)&255,n&255);
-  const ai1=hslToRgb((h+.5)%1,Math.max(.48,s),.54),ai2=hslToRgb((h+.5)%1,Math.max(.48,s),.45);
-  const aiA=hexOf(...ai1),aiB=hexOf(...ai2);
  r.setProperty('--acc',hex1);r.setProperty('--acc2',hex2);
-  r.setProperty('--accText',accentTextColor(hex1,hex2));
+ r.setProperty('--accText',accentTextColor(hex1,hex2));
  r.setProperty('--grad','linear-gradient(135deg,'+hex1+','+hex2+')');
-  r.setProperty('--gradAI','linear-gradient(135deg,'+aiA+','+aiB+')');
-  r.setProperty('--aiText',accentTextColor(aiA,aiB));
  r.setProperty('--glow',hex1+'33');
 }
 function extractThemeFromImage(file){
@@ -683,7 +676,7 @@ $('themeImgPick').onchange=async e=>{
 };
 $('themeReset').onclick=()=>{
  const r=document.documentElement.style;
-  ['--acc','--acc2','--accText','--grad','--gradAI','--aiText','--glow'].forEach(v=>r.removeProperty(v));
+  ['--acc','--acc2','--accText','--grad','--glow'].forEach(v=>r.removeProperty(v));
  try{localStorage.removeItem(THEME_KEY);}catch(e){}
  toast('تمت الاستعادة');
 };
