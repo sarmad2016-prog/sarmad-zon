@@ -205,7 +205,7 @@ const GAME_DOCS = {"snake": "\u003c!DOCTYPE html>\n\u003chtml lang=\"ar\" dir=\"
     e.preventDefault(); openGame(card.dataset.game);
   }));
   function openGame(key, pushHistory = true) {
-    if (!GAME_DOCS[key]) return;
+    if (!GAME_DOCS[key] && key !== 'tetris') return;
     if (pushHistory) {
       const params = new URLSearchParams(location.search); params.set('game', key);
       try { history.pushState({game:key}, '', location.pathname + '?' + params.toString() + location.hash); } catch (e) {}
@@ -234,7 +234,7 @@ const GAME_DOCS = {"snake": "\u003c!DOCTYPE html>\n\u003chtml lang=\"ar\" dir=\"
   window.openGame = openGame; window.__goHub = goHome;
   window.addEventListener('popstate', () => {
     const key = new URLSearchParams(location.search).get('game');
-    if (GAME_DOCS[key]) openGame(key, false); else goHome(false);
+    if (GAME_DOCS[key] || key === 'tetris') openGame(key, false); else goHome(false);
   });
 
   // ===== الإعدادات =====
