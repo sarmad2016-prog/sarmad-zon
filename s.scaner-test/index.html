@@ -68,7 +68,7 @@ header h1{font-size:16px;flex:1;font-weight:800;display:flex;align-items:center;
 .iconbtn:hover{border-color:var(--acc)}
 main{max-width:720px;margin:0 auto;padding:10px 12px}
 .view{display:none}.view.active{display:block}
-#launcher{min-height:calc(100vh - 80px);display:flex;flex-direction:column;max-width:500px;margin:12px auto;padding:18px 14px;border-radius:22px;background:linear-gradient(155deg,var(--card),var(--card2));color:var(--txt);border:1px solid var(--line);box-shadow:0 12px 36px rgba(21,43,82,.12)}
+#launcher.view:not(.active){display:none}#launcher.view.active{display:flex}#launcher{min-height:calc(100vh - 80px);display:flex;flex-direction:column;max-width:500px;margin:12px auto;padding:18px 14px;border-radius:22px;background:linear-gradient(155deg,var(--card),var(--card2));color:var(--txt);border:1px solid var(--line);box-shadow:0 12px 36px rgba(21,43,82,.12)}
 #launcher h2{color:var(--txt)}
 #launcher .btn.secondary{background:var(--card2);color:var(--txt);border:1px solid var(--line)}
 
@@ -476,6 +476,7 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
 <div id="settings" class="modal hidden">
  <div class="modal-card">
   <h3 data-ic="sliders">إعدادات البرنامج</h3>
+  <button class="btn ghost" id="settingsClose" type="button" data-ic="x" style="margin:0 0 12px">خروج من الإعدادات</button>
   <div style="margin:8px 0 14px;padding-bottom:12px;border-bottom:1px solid var(--line)">
    <label style="margin-top:0" data-ic="disk">النسخ الاحتياطي للمجموعات</label>
    <p style="font-size:10.5px;color:var(--sub);line-height:1.6;margin-bottom:8px">يحفظ أو يستعيد مجموعات الماسح وترتيب المستمسكات وقوالب التخطيط.</p>
@@ -540,7 +541,7 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='6.10.1-test';
+const APP_VERSION='6.10.2-test';
 
 /* ===== أيقونات SVG بدل الإيموجي =====
    بعض متصفحات الويب فيو المستخدمة في تطبيقات تغليف المواقع (مثل appsgeyser) لا تملك خط إيموجي كامل،
@@ -667,6 +668,7 @@ async function loadPersisted(){
 /* ===== إعدادات الذكاء الاصطناعي ===== */
 function openSettings(){$('settings').classList.remove('hidden');}
 $('btnSettings').onclick=openSettings;
+$('settingsClose').onclick=()=>{$('settings').classList.add('hidden');};
 
 /* ===== نافذة اسم الملف ===== */
 let nameCb=null;
