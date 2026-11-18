@@ -310,8 +310,8 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
 </div>
 <h2 style="text-align:center;font-size:16px;margin-bottom:3px">مرحباً بك</h2>
 <p style="text-align:center;color:var(--sub);font-size:11.5px;margin-bottom:14px">اختر الأداة التي تريد استخدامها</p>
-<button class="btn primary" id="btnGoScanner" data-ic="camera" style="padding:15px;font-size:14px">ماسح المستندات</button>
-<button class="btn secondary" id="btnCardPrintHome" data-ic="printer" style="padding:13px;font-size:13px">حفظ المستمسكات</button>
+<button class="btn primary" id="btnGoScanner" type="button" data-ic="camera" style="padding:15px;font-size:14px"
+ onclick="document.getElementById('launcher').classList.remove('active');document.getElementById('home').classList.add('active');document.body.classList.remove('launcher-mode');window.scrollTo(0,0)">ماسح المستندات</button>
 
 <div class="recentBox">
  <div class="recentHead"><h3 data-ic="clock">الملفات الأخيرة</h3><div class="recentTools"><select class="recentFolderFilter" id="recentFolderFilter" aria-label="تصفية حسب المجلد"><option value="">كل الملفات</option></select><button class="recentFolderNew" id="recentFolderNew" type="button">+ مجلد</button><button class="recentSelectMode" id="recentSelectMode" type="button">تحديد</button><button class="recentRefresh" id="recentRefresh" type="button">تحديث</button></div></div>
@@ -540,7 +540,7 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
 <script>
 'use strict';
 const $=id=>document.getElementById(id);
-const APP_VERSION='6.10-test';
+const APP_VERSION='6.10.1-test';
 
 /* ===== أيقونات SVG بدل الإيموجي =====
    بعض متصفحات الويب فيو المستخدمة في تطبيقات تغليف المواقع (مثل appsgeyser) لا تملك خط إيموجي كامل،
@@ -2220,7 +2220,6 @@ function openCardPrint(){
  $('cardPrintModal').classList.remove('hidden');refreshCardPrintPreview();
 }
 $('btnCardPrint').onclick=openCardPrint;
-$('btnCardPrintHome').onclick=()=>{show('home');if(state.pages.length)openCardPrint();else toast('التقط أو ارفع المستمسكات أولاً ثم استخدم حفظ المستمسكات')};
 $('cardPrintClose').onclick=$('cardPrintCancel').onclick=()=>$('cardPrintModal').classList.add('hidden');
 $('cardPrintPreset').onchange=refreshCardPrintPreview;
 $('cardPrintOrientation').onchange=refreshCardPrintPreview;
