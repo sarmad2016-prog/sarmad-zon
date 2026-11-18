@@ -1152,7 +1152,7 @@ async function nextCameraBatchPage(){
 }
 function canvasBatchData(source){
  const width=source.width||source.videoWidth,height=source.height||source.videoHeight;
- const scale=Math.min(1,2600/Math.max(width,height)),canvas=document.createElement('canvas');
+ const scale=Math.min(1,2800/Math.max(width,height)),canvas=document.createElement('canvas');
  canvas.width=Math.max(2,Math.round(width*scale));canvas.height=Math.max(2,Math.round(height*scale));
  const ctx=canvas.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.drawImage(source,0,0,canvas.width,canvas.height);
  const src=canvas.toDataURL('image/jpeg',.93);canvas.width=canvas.height=0;return src;
@@ -1903,7 +1903,7 @@ function homography(dst,src){
 $('btnDone').onclick=()=>{doWarp();show('result');filterId='boost';buildChips();applyFilter();};
 function doWarp(){
  const e=state.edit;const img=e.img;
- const CAP=2400;const sc=Math.min(1,CAP/Math.max(img.width,img.height));
+ const CAP=2800;const sc=Math.min(1,CAP/Math.max(img.width,img.height));
  const sw=Math.max(2,Math.round(img.width*sc)),sh=Math.max(2,Math.round(img.height*sc));
  const sc2=document.createElement('canvas');sc2.width=sw;sc2.height=sh;
  const sctx=sc2.getContext('2d',{willReadFrequently:true});sctx.drawImage(img,0,0,sw,sh);
@@ -1914,7 +1914,7 @@ function doWarp(){
  const ratio=snapRatio(estimateRatio(q,sw,sh,r0));
  const base=Math.sqrt(Math.max(top,bot)*Math.max(lef,rig)*ratio);
  const ow0=base,oh0=base/ratio;
- const CAP2=2000;const s2=Math.min(1,CAP2/Math.max(ow0,oh0));
+ const CAP2=2600;const s2=Math.min(1,CAP2/Math.max(ow0,oh0));
  const ow=Math.max(16,Math.round(ow0*s2)),oh=Math.max(16,Math.round(oh0*s2));
  const Hm=homography([[0,0],[ow,0],[ow,oh],[0,oh]],q);
  const out=new ImageData(ow,oh);const sd=src.data,od=out.data;
@@ -1932,6 +1932,7 @@ function doWarp(){
    od[o+3]=255;
   }}
  state.warpData=out;state.warpW=ow;state.warpH=oh;
+ toast('الدقة الأصلية: '+img.width+' × '+img.height+' — بعد القص: '+ow+' × '+oh);
 }
 function sharpen(d,W,H,amt){
  const s=new Uint8ClampedArray(d);
