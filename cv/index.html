@@ -23370,7 +23370,21 @@ else if(x.id=='bPdf')pdf(false);else if(x.id=='bShare')pdf(true)});
 function improve(b){const[a,i]=b.dataset.ai.split(':'),txt=a=='summary'?S.d.summary:S.d.exp[i].desc;return run(b,async()=>{if(!txt.trim())throw{code:'empty'};
 const v=await AI(`Rewrite this resume ${a=='summary'?'summary':'job description'} to be concise, professional and achievement-oriented, ATS-friendly. Keep the same language as the text and do not invent facts. Return only the rewritten text, no quotes or comments.\n\n${txt}`);
 if(!v)throw{code:'empty'};if(a=='summary')S.d.summary=v;else S.d.exp[i].desc=v;form();toast(t().done)})}
+let pendingCvShareFile=null;
 async function pdf(share,kind){
+if(share&&pendingCvShareFile){
+const ready=pendingCvShareFile;
+try{
+if(!navigator.share||(navigator.canShare&&!navigator.canShare({files:[ready]})))throw new Error('File sharing is unavailable');
+await navigator.share({files:[ready],title:ready.name,text:t().wa});
+pendingCvShareFile=null;
+toast(S.lang=='ar'?'تم فتح مشاركة ملف السيرة':'Resume file sharing opened');
+}catch(er){
+if(er&&er.name==='AbortError'){pendingCvShareFile=null;toast(S.lang=='ar'?'تم إلغاء المشاركة':'Sharing cancelled');}
+else toast(S.lang=='ar'?'الملف جاهز؛ تعذرت المشاركة من هذا المتصفح. جرّب الضغط مرة أخرى أو نزّل الملف.':'The file is ready, but sharing failed. Try again or download the file.');
+}
+return;
+}
 toast(t().pdfing);
 const el=document.createElement('div');
 el.style.cssText='position:fixed;left:0;top:0;z-index:2147483647;width:794px;max-width:none;pointer-events:none;visibility:visible;opacity:1;background:#fff';
@@ -23403,10 +23417,14 @@ await save2(file,nm);
 toast(S.lang=='ar'?'هذا المتصفح لا يدعم إرفاق PDF مباشرة بواتساب؛ تم تنزيل الملف ويمكن إرفاقه يدوياً.':'This browser cannot share PDF files directly; the PDF was downloaded for manual attachment.');
 return;
 }
+pendingCvShareFile=file;
 await navigator.share({files:[file],title:nm,text:t().wa});
+pendingCvShareFile=null;
 }else await save2(file,nm);
 }catch(er){
-if(er&&er.name==='AbortError'){toast(S.lang=='ar'?'تم إلغاء المشاركة':'Sharing cancelled');}
+if(er&&er.name==='NotAllowedError'&&share&&pendingCvShareFile){
+toast(S.lang=='ar'?'تم تجهيز ملف PDF؛ اضغط زر واتساب مرة ثانية لإرفاقه.':'PDF is ready; press the WhatsApp button again to attach it.');
+}else if(er&&er.name==='AbortError'){pendingCvShareFile=null;toast(S.lang=='ar'?'تم إلغاء المشاركة':'Sharing cancelled');}
 else{console.error('PDF export failed:',er);toast(t().err);}
 }finally{el.remove()}
 }
