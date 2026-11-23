@@ -13,10 +13,10 @@
   "theme_color": "#0d3f29",
   "icons": [
     {
-      "src": "./zone-icon.svg",
+      "src": "./library-icon.svg?v=1",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
