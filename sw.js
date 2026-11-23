@@ -1,4 +1,4 @@
-const CACHE_NAME = "sarmad-zone-v8";
+const CACHE_NAME = "sarmad-zone-v9";
 const APP_SCOPE = new URL(self.registration.scope);
 const APP_FILES = [
   "./library/",
@@ -13,6 +13,8 @@ const APP_FILES = [
   "./install-prompt.js",
   "./update-news.js",
   "./library-icon.svg",
+  "./library-icon-192.svg",
+  "./library-icon-512.svg",
   "./zone-icon.svg",
   "./cv/cv-icon.svg",
   "./games/games-icon.svg"
