@@ -13,10 +13,10 @@
   "theme_color": "#0d3f29",
   "icons": [
     {
-      "src": "../zone-icon.svg",
-      "sizes": "any",
+      "src": "./scanner-logo.svg?v=1",
+      "sizes": "512x512",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
     }
   ]
 }
