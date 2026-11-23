@@ -2,7 +2,7 @@
   'use strict';
   const announcements = [
     {
-      id: '2026-11-23-library-icon-and-news',
+      id: '2026-11-23-library-icon-round-v2',
       tag: 'تحديث المكتبة',
       title: 'أيقونة جديدة ونافذة للتحديثات',
       body: 'اعتمدنا أيقونة دائرية جديدة للمكتبة. وأضفنا هذه النافذة حتى تصلك أخبار البرامج والميزات الجديدة مع شرح مختصر عند فتح المكتبة أو أي برنامج.'
@@ -59,7 +59,6 @@
       overlay.remove();
     };
     overlay.querySelector('#szNewsClose').addEventListener('click', close);
-    overlay.addEventListener('click', event => { if (event.target === overlay) close(); });
     overlay.querySelector('#szNewsClose').focus();
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', show, { once: true });
