@@ -1,6 +1,6 @@
-const CACHE = 's-scaner-v9';
+const CACHE = 's-scaner-v10';
 const ROOT = new URL('./', self.location).pathname;
-const FILES = [ROOT, ROOT + 'index.html', ROOT + 'manifest.webmanifest', ROOT + 'scanner-logo.svg'];
+const FILES = [ROOT, ROOT + 'index.html', ROOT + 'manifest.webmanifest', ROOT + 'splash-screen-logo.svg'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)).then(() => self.skipWaiting()));
 });
