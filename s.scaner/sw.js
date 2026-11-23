@@ -1,4 +1,4 @@
-const CACHE = 's-scaner-v10';
+const CACHE = 's-scaner-v11';
 const ROOT = new URL('./', self.location).pathname;
 const FILES = [ROOT, ROOT + 'index.html', ROOT + 'manifest.webmanifest', ROOT + 'splash-screen-logo.svg'];
 self.addEventListener('install', event => {
