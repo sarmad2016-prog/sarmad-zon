@@ -7,6 +7,7 @@ const APP_FILES = [
   "./s.scaner/",
   "./s.scaner/index.html",
   "./s.scaner/manifest.webmanifest",
+  "./s.scaner/scanner-logo.svg",
   "./manifest.webmanifest",
   "./cv/manifest.webmanifest",
   "./games/manifest.webmanifest",
