@@ -13,10 +13,16 @@
   "theme_color": "#0d3f29",
   "icons": [
     {
-      "src": "./scanner-logo.svg?v=1",
-      "sizes": "512x512",
+      "src": "./scanner-logo.svg?v=2",
+      "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any"
+    },
+    {
+      "src": "./scanner-logo.svg?v=2",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ]
 }
