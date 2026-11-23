@@ -503,8 +503,8 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
   <h3 data-ic="sliders">إعدادات البرنامج</h3>
   <button class="btn ghost" id="settingsClose" type="button" data-ic="x" style="margin:0 0 12px">خروج من الإعدادات</button>
   <div style="margin:8px 0 14px;padding-bottom:12px;border-bottom:1px solid var(--line)">
-   <label style="margin-top:0" data-ic="disk">النسخ الاحتياطي للمجموعات</label>
-   <p style="font-size:10.5px;color:var(--sub);line-height:1.6;margin-bottom:8px">يحفظ أو يستعيد مجموعات الماسح وترتيب المستمسكات وقوالب التخطيط.</p>
+   <label style="margin-top:0" data-ic="disk">النسخ الاحتياطي للملفات</label>
+   <p style="font-size:10.5px;color:var(--sub);line-height:1.6;margin-bottom:8px">يحفظ أو يستعيد الملفات المحفوظة وترتيب المستمسكات وقوالب التخطيط.</p>
    <div class="row" style="margin-top:0">
     <button class="btn secondary" id="btnBackup" data-ic="disk">نسخ احتياطي</button>
     <button class="btn ghost" id="btnRestore" data-ic="folderDown">استيراد</button>
@@ -518,8 +518,8 @@ h3.sec .selToggle.on{background:var(--grad);color:#fff;border-color:transparent}
  <div class="modal-card">
   <h3 data-ic="send">اختر طريقة الإرسال</h3>
   <p style="font-size:12px;color:var(--sub);line-height:1.6" id="sendInfo"></p>
-  <button class="btn primary" id="sendAsPdf" data-ic="doc">PDF مستقل لكل مجموعة</button>
-  <button class="btn secondary" id="sendAsImg" data-ic="image">صور بأسماء المجموعات</button>
+  <button class="btn primary" id="sendAsPdf" data-ic="doc">PDF مستقل لكل ملف</button>
+  <button class="btn secondary" id="sendAsImg" data-ic="image">صور بأسماء الملفات</button>
   <button class="btn ghost" id="sendCancel" data-ic="arrowBack">رجوع</button>
  </div>
 </div>
@@ -829,8 +829,8 @@ $('recentRefresh').onclick=()=>loadRecentFiles();
  $('recentSelectMode').onclick=()=>{recentSelectionMode=!recentSelectionMode;if(!recentSelectionMode)recentSelectedKeys.clear();renderRecentFiles()};
  $('recentCancelSelect').onclick=()=>{recentSelectionMode=false;recentSelectedKeys.clear();renderRecentFiles()};
  $('recentDeleteSelected').onclick=async()=>{
-  const items=selectedRecentItems();if(!items.length){toast('حدد مستندات أو مجموعات أولاً');return}
-  if(!await askConfirm('سيتم مسح '+items.length+' عنصر من قائمة الملفات الأخيرة. ستبقى المجموعات الأصلية محفوظة.','مسح الملفات الأخيرة','مسح'))return;
+  const items=selectedRecentItems();if(!items.length){toast('حدد مستندات أو ملفات أولاً');return}
+  if(!await askConfirm('سيتم مسح '+items.length+' عنصر من قائمة الملفات الأخيرة. ستبقى الملفات الأصلية محفوظة.','مسح الملفات الأخيرة','مسح'))return;
   const keys=new Set(items.map(recentEntryKey));recentFiles=recentFiles.filter(f=>!keys.has(recentEntryKey(f)));
   items.filter(f=>f.kind).forEach(f=>{const key=recentEntryKey(f);if(!recentHiddenIds.includes(key))recentHiddenIds.push(key)});
   keys.forEach(key=>{delete recentFolderMap[key];recentSelectedKeys.delete(key)});
@@ -880,7 +880,7 @@ async function prepareRecentShareCurrent(){
  $('recentShareName').textContent=recentShareFile.name;$('recentShareSend').disabled=false;$('recentShareDownload').disabled=false;
 }
 async function startRecentShare(){
- const items=selectedRecentItems();if(!items.length){toast('حدد مستندات أو مجموعات أولاً');return}
+ const items=selectedRecentItems();if(!items.length){toast('حدد مستندات أو ملفات أولاً');return}
  recentShareQueue=items;recentShareIndex=0;$('recentShareModal').classList.remove('hidden');await prepareRecentShareCurrent();
 }
 async function advanceRecentShare(){recentShareIndex++;if(recentShareIndex>=recentShareQueue.length){closeRecentShare();toast('اكتمل الإرسال');return}await prepareRecentShareCurrent()}
@@ -1017,7 +1017,7 @@ $('viewerDeleteImage').onclick=async()=>{
  const group=await getScannerGroupById(v.groupId);if(!group){toast('تعذّر العثور على المجموعة');return}
  if(!group.pages.length)return;
  const last=group.pages.length<=1;
-  const promptText=last?'هذه آخر صورة. ستبقى المجموعة فارغة ويمكنك إضافة صورة بديلة لاحقاً. هل تريد المتابعة؟':'حذف الصورة الحالية فقط؟ ستبقى بقية صور المجموعة محفوظة.';
+  const promptText=last?'هذه آخر صورة. سيبقى الملف فارغاً ويمكنك إضافة صورة بديلة لاحقاً. هل تريد المتابعة؟':'حذف الصورة الحالية فقط؟ ستبقى بقية صور المجموعة محفوظة.';
  if(!await askConfirm(promptText,'حذف الصورة'))return;
  group.pages.splice(v.index,1);await persistGroupSave(group);renderGroups();await loadRecentFiles();
   openScannerGroup(group,Math.min(v.index,Math.max(0,group.pages.length-1)));toast(last?'حُذفت الصورة وبقيت المجموعة جاهزة لإضافة بديل':'حُذفت الصورة المحددة وبقيت بقية المجموعة');
@@ -2095,7 +2095,7 @@ function watermarked(url,w,h){
 $('btnBack').onclick=()=>show('editor');
 async function saveCurrentImageToGroup(wm){
  const job=state.groupImageEdit,group=await getScannerGroupById(job.groupId);
- if(!group){state.groupImageEdit=null;fileQueue=[];show('home');toast('تعذّر العثور على المجموعة لحفظ الصورة');return}
+ if(!group){state.groupImageEdit=null;fileQueue=[];show('home');toast('تعذّر العثور على الملف لحفظ الصورة');return}
  const page={id:Date.now()+Math.random(),url:wm.url,w:wm.w,h:wm.h};
  if(job.mode==='replace'&&!job.didReplace&&group.pages.length&&job.index<group.pages.length){
   group.pages.splice(job.index,1,page);job.lastIndex=job.index;job.didReplace=true;job.insertAt=job.index+1;
@@ -2311,7 +2311,7 @@ function openScannerGroup(g,index=0){
 function renderGroups(){
  const wrap=$('groupsList');wrap.innerHTML='';
  if(!state.groups.length){
-  wrap.innerHTML='<div style="color:var(--sub);font-size:14px;text-align:center;padding:8px 0">لا توجد مجموعات محفوظة بعد</div>';
+  wrap.innerHTML='<div style="color:var(--sub);font-size:14px;text-align:center;padding:8px 0">لا توجد ملفات محفوظة بعد</div>';
   return;
  }
  state.groups.forEach(g=>{
@@ -2357,7 +2357,7 @@ $('btnMergeGroups').onclick=()=>{
 /* ===== نسخة احتياطية: تصدير/استيراد كل المجموعات كملف JSON واحد (لنقلها لأي جهاز أو رفعها لأي سحابة يدوياً) ===== */
 $('btnBackup').onclick=async()=>{
  try{
-  if(!state.groups.length){toast('لا توجد مجموعات محفوظة بعد');return;}
+  if(!state.groups.length){toast('لا توجد ملفات محفوظة بعد');return;}
   const payload={app:'sarmad-scanner-backup',version:3,exportedAt:new Date().toISOString(),
    groups:state.groups.map(g=>({id:g.id,name:g.name,pages:g.pages}))};
   const blob=new Blob([JSON.stringify(payload)],{type:'application/json'});
@@ -2436,12 +2436,12 @@ async function shareOrSave(blob,fname,mime,title){
  return false;
 }
 
-/* ===== إرسال المجموعات المحددة: اختيار PDF مستقل لكل مجموعة أو صور باسم المجموعة ===== */
+/* ===== إرسال المجموعات المحددة: اختيار PDF مستقل لكل ملف أو صور باسم المجموعة ===== */
 let sendTargets=[];
 $('btnSendGroups').onclick=()=>{
  sendTargets=state.groups.filter(g=>g.sel);
- if(!sendTargets.length){toast('حدد مجموعة واحدة على الأقل للإرسال');return;}
- $('sendInfo').textContent='سيتم إرسال '+sendTargets.length+' مجموعة: '+sendTargets.map(g=>g.name).join('، ');
+ if(!sendTargets.length){toast('حدد ملفاً واحداً على الأقل للإرسال');return;}
+ $('sendInfo').textContent='سيتم إرسال '+sendTargets.length+' ملفات: '+sendTargets.map(g=>g.name).join('، ');
  $('sendModal').classList.remove('hidden');
 };
 $('sendCancel').onclick=()=>$('sendModal').classList.add('hidden');
