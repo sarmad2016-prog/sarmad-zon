@@ -13,7 +13,7 @@
   "theme_color": "#0d3f29",
   "icons": [
     {
-      "src": "./library-icon.svg?v=1",
+      "src": "./library-icon.svg?v=2",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"
