@@ -9,18 +9,12 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#e3ecea",
+  "background_color": "#ffffff",
   "theme_color": "#0d3f29",
   "icons": [
     {
-      "src": "./splash-screen-logo.svg?v=2",
-      "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "./splash-screen-logo.svg?v=2",
-      "sizes": "512x512",
+      "src": "./app-icon.svg?v=1",
+      "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     }
