@@ -1,11 +1,11 @@
-const CACHE = 's-scaner-v11';
+const CACHE = 's-scaner-v12';
 const ROOT = new URL('./', self.location).pathname;
-const FILES = [ROOT, ROOT + 'index.html', ROOT + 'manifest.webmanifest', ROOT + 'splash-screen-logo.svg'];
+const FILES = [ROOT, ROOT + 'index.html', ROOT + 'manifest.webmanifest', ROOT + 'app-icon.svg'];
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(FILES)).then(() => self.skipWaiting()));
 });
 self.addEventListener('activate', event => {
-  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('s-scaner-') && key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim()));
+  event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key.startsWith('s-scaner-test-') && key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim()));
 });
 self.addEventListener('fetch', event => {
   const request = event.request;
